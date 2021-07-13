@@ -128,7 +128,8 @@ local function parse(filepath, config)
 	local opts = {}
 	local confdir = dirname(config)
 
-	for _, line in ipairs(vim.fn.readfile(config)) do
+	local f = assert(io.open(config, "r"))
+	for line in f:lines() do
 		if not line:find("^%s*$") and not line:find("^%s*[#;]") then
 			local glob = string.match(line:match("%b[]") or "", "%[([^%]]+)")
 			if glob then
@@ -151,6 +152,8 @@ local function parse(filepath, config)
 			end
 		end
 	end
+
+	f:close()
 
 	return opts
 end
