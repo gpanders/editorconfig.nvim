@@ -1,0 +1,16 @@
+root = true
+
+[*.lua]
+indent_style = tab
+trim_trailing_whitespace = true
+max_line_length = 120
+
+[*.vim]
+indent_style = space
+indent_size = 4
+
+[*.md]
+indent_style = space
+indent_size = 4
+max_line_length = 80
+trim_trailing_whitespace = false
