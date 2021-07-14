@@ -132,7 +132,7 @@ local function parse(filepath, config)
 
 	local f = assert(io.open(config, "r"))
 	for line in f:lines() do
-		if not line:find("^%s*$") and not line:find("^%s*[#;]") then
+		if line:find("^%s*[^ #;]") then
 			local glob = string.match(line:match("%b[]") or "", "%[([^%]]+)")
 			if glob then
 				if glob:find(pathsep) then
