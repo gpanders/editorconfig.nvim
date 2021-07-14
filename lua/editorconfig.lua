@@ -17,10 +17,6 @@
 
 local pathsep = package.config:sub(1, 1)
 
-local function invalid(opt, val)
-	vim.api.nvim_err_writeln(string.format("editorconfig: invalid value for option %s: %s", opt, val))
-end
-
 -- Modified version of glob2regpat that does not match path separators on *.
 -- Basically, this replaces single instances of * with the regex pattern [^/]*.
 -- However, the star in the replacement pattern also gets interpreted by
@@ -39,98 +35,12 @@ local function dirname(path)
 	return path:match(string.format("^(.+)%s[^%s]+", pathsep, pathsep)) or path
 end
 
-local function apply(opts)
-	for opt, val in pairs(opts) do
-		if opt == "charset" then
-			if val == "utf-8" then
-				vim.bo.fileencoding = "utf-8"
-				vim.bo.bomb = false
-			elseif val == "utf-8-bom" then
-				vim.bo.fileencoding = "utf-8"
-				vim.bo.bomb = true
-			elseif vim.tbl_contains({
-				"latin1",
-				"utf-16be",
-				"utf-16le",
-			}, val) then
-				vim.bo.fileencoding = val
-			else
-				invalid(opt, val)
-			end
-		elseif opt == "end_of_line" then
-			if val == "lf" then
-				vim.bo.fileformat = "unix"
-			elseif val == "crlf" then
-				vim.bo.fileformat = "dos"
-			elseif val == "cr" then
-				vim.bo.fileformat = "mac"
-			else
-				invalid(opt, val)
-			end
-		elseif opt == "indent_style" then
-			if val == "tab" then
-				vim.bo.expandtab = false
-				if not opts.indent_size then
-					vim.bo.shiftwidth = 0
-					vim.bo.softtabstop = 0
-				end
-			elseif val == "space" then
-				vim.bo.expandtab = true
-			else
-				invalid(opt, val)
-			end
-		elseif opt == "indent_size" then
-			if val == "tab" then
-				vim.bo.shiftwidth = 0
-				vim.bo.softtabstop = 0
-			else
-				local n = tonumber(val)
-				if n then
-					vim.bo.shiftwidth = n
-					vim.bo.softtabstop = -1
-					if not opts.tab_width then
-						vim.bo.tabstop = n
-					end
-				else
-					invalid(opt, val)
-				end
-			end
-		elseif opt == "tab_width" then
-			local n = tonumber(val)
-			if n then
-				vim.bo.tabstop = n
-			else
-				invalid(opt, val)
-			end
-		elseif opt == "max_line_length" then
-			local n = tonumber(val)
-			if n then
-				vim.bo.textwidth = n
-			else
-				invalid(opt, val)
-			end
-		elseif opt == "trim_trailing_whitespace" then
-			if val == "true" then
-				vim.cmd("autocmd! editorconfig BufWritePre <buffer> lua require('editorconfig').trim_trailing_whitespace()")
-			elseif val ~= "false" then
-				invalid(opt, val)
-			end
-		elseif opt == "insert_final_newline" then
-			if vim.tbl_contains({ "true", "false" }, val) then
-				vim.bo.fixendofline = val == "true"
-			else
-				invalid(opt, val)
-			end
-		end
-	end
-end
-
 local function parse(filepath, config)
 	local pat
 	local opts = {}
 	local confdir = dirname(config)
-
 	local f = assert(io.open(config, "r"))
+
 	for line in f:lines() do
 		if line:find("^%s*[^ #;]") then
 			local glob = string.match(line:match("%b[]") or "", "%[([^%]]+)")
@@ -163,6 +73,61 @@ local function parse(filepath, config)
 	return opts
 end
 
+local apply_option = {
+	["charset"] = function(val)
+		assert(vim.tbl_contains({ "utf-8", "utf-8-bom", "latin1", "utf-16be", "utf-16le" }, val))
+		if val == "utf-8" then
+			vim.bo.fileencoding = "utf-8"
+			vim.bo.bomb = false
+		elseif val == "utf-8-bom" then
+			vim.bo.fileencoding = "utf-8"
+			vim.bo.bomb = true
+		else
+			vim.bo.fileencoding = val
+		end
+	end,
+	["end_of_line"] = function(val)
+		vim.bo.fileformat = assert(({ lf = "unix", crlf = "dos", cr = "mac" })[val])
+	end,
+	["indent_style"] = function(val, opts)
+		assert(val == "tab" or val == "space")
+		vim.bo.expandtab = val == "space"
+		if val == "tab" and not opts.indent_size then
+			vim.bo.shiftwidth = 0
+			vim.bo.softtabstop = 0
+		end
+	end,
+	["indent_size"] = function(val, opts)
+		if val == "tab" then
+			vim.bo.shiftwidth = 0
+			vim.bo.softtabstop = 0
+		else
+			local n = assert(tonumber(val))
+			vim.bo.shiftwidth = n
+			vim.bo.softtabstop = -1
+			if not opts.tab_width then
+				vim.bo.tabstop = n
+			end
+		end
+	end,
+	["tab_width"] = function(val)
+		vim.bo.tabstop = assert(tonumber(val))
+	end,
+	["max_line_length"] = function(val)
+		vim.bo.textwidth = assert(tonumber(val))
+	end,
+	["trim_trailing_whitespace"] = function(val)
+		assert(val == "true" or val == "false")
+		if val == "true" then
+			vim.cmd("autocmd! editorconfig BufWritePre <buffer> lua require('editorconfig').trim_trailing_whitespace()")
+		end
+	end,
+	["insert_final_newline"] = function(val)
+		assert(val == "true" or val == "false")
+		vim.bo.fixendofline = val == "true"
+	end,
+}
+
 local M = {}
 
 function M.config()
@@ -194,7 +159,11 @@ function M.config()
 		curdir = parent
 	end
 
-	apply(opts)
+	for opt, val in pairs(opts) do
+		if apply_option[opt] and not pcall(apply_option[opt], val, opts) then
+			vim.api.nvim_err_writeln(string.format("editorconfig: invalid value for option %s: %s", opt, val))
+		end
+	end
 end
 
 function M.trim_trailing_whitespace()
