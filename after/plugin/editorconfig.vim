@@ -15,7 +15,7 @@
 " You should have received a copy of the GNU General Public License along with
 " this program.  If not, see <https://www.gnu.org/licenses/>.
 
-if exists('g:loaded_editorconfig')
+if exists('g:loaded_editorconfig') || !has('nvim')
     finish
 endif
 let g:loaded_editorconfig = 1
