@@ -148,6 +148,9 @@ local function parse(filepath, config)
 					if key == "root" then
 						opts.root = val == "true"
 					elseif pat and pat:match_str(filepath) then
+						if val == "unset" then
+							val = nil
+						end
 						opts[key] = val
 					end
 				end
