@@ -28,9 +28,11 @@ end
 -- replace the placeholder with the actual regex pattern
 local function glob2regpat(glob)
 	-- Replace {m..n} with [m-n]
-	local g = glob:gsub("{(%d+)%.%.(%d+)}", "[%1-%2]")
-	g = vim.fn.substitute(g, "\\*\\@<!\\*\\*\\@!", "@@PLACEHOLDER@@", "g")
-	return vim.fn.substitute(vim.fn.glob2regpat(g), "@@PLACEHOLDER@@", "[^" .. pathsep .. "]*", "g")
+	local tmp = glob:gsub("{(%d+)%.%.(%d+)}", "[%1-%2]")
+	-- Replace single *'s with a placeholder
+	tmp = vim.fn.substitute(tmp, "\\*\\@<!\\*\\*\\@!", "@@PLACEHOLDER@@", "g")
+
+	return (string.gsub(vim.fn.glob2regpat(tmp), "@@PLACEHOLDER@@", "[^" .. pathsep .. "]*"))
 end
 
 local function dirname(path)
