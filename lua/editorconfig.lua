@@ -116,10 +116,8 @@ local function apply(opts)
 				invalid(opt, val)
 			end
 		elseif opt == "insert_final_newline" then
-			if val == "true" then
-				vim.bo.fixendofline = true
-			elseif val == "false" then
-				vim.bo.fixendofline = false
+			if vim.tbl_contains({ "true", "false" }, val) then
+				vim.bo.fixendofline = val == "true"
 			else
 				invalid(opt, val)
 			end
