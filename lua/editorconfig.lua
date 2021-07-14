@@ -144,7 +144,7 @@ local function parse(filepath, config)
 			else
 				local key, val = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
 				if key then
-					val = val:lower()
+					key, val = key:lower(), val:lower()
 					if key == "root" then
 						opts.root = val == "true"
 					elseif pat and pat:match_str(filepath) then
