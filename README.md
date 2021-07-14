@@ -21,6 +21,19 @@ directly.
 * `tab_width`
 * `trim_trailing_whitespace`
 
+## Contributing
+
+File issues in the [GitHub issue tracker][issues]. Changes can be sent as
+[`git-send-email`][git-send-email] patches to
+[~gpanders/public-inbox@lists.sr.ht][public-inbox] or as a GitHub pull request.
+
+Lua files should be formatted with [stylua][].
+
+[issues]: https://github.com/gpanders/editorconfig.nvim/issues
+[git-send-email]: https://git-send-email.io
+[public-inbox]: mailto:~gpanders/public-inbox@lists.sr.ht
+[stylua]: https://github.com/johnnymorganz/stylua
+
 ## License
 
 [GPLv3][]
