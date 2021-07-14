@@ -112,6 +112,8 @@ local function apply(opts)
 		elseif opt == "trim_trailing_whitespace" then
 			if val == "true" then
 				vim.cmd("autocmd! editorconfig BufWritePre <buffer> lua require('editorconfig').trim_trailing_whitespace()")
+			elseif val ~= "false" then
+				invalid(opt, val)
 			end
 		elseif opt == "insert_final_newline" then
 			if val == "true" then
