@@ -58,9 +58,6 @@ local function parse(filepath, config)
 					if key == "root" then
 						opts.root = val == "true"
 					elseif pat and pat:match_str(filepath) then
-						if val == "unset" then
-							val = nil
-						end
 						opts[key] = val
 					end
 				end
@@ -160,7 +157,7 @@ function M.config()
 	end
 
 	for opt, val in pairs(opts) do
-		if apply_option[opt] and not pcall(apply_option[opt], val, opts) then
+		if val ~= "unset" and apply_option[opt] and not pcall(apply_option[opt], val, opts) then
 			vim.api.nvim_err_writeln(string.format("editorconfig: invalid value for option %s: %s", opt, val))
 		end
 	end
