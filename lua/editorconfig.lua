@@ -39,7 +39,11 @@ local function parse(filepath, config)
 	local pat
 	local opts = {}
 	local confdir = dirname(config)
-	local f = assert(io.open(config, "r"))
+
+	local f = io.open(config, "r")
+	if not f then
+		return opts
+	end
 
 	for line in f:lines() do
 		if line:find("^%s*[^ #;]") then
@@ -142,11 +146,9 @@ function M.config()
 	local curdir = dirname(path)
 	while true do
 		local config = curdir .. pathsep .. ".editorconfig"
-		if vim.loop.fs_access(config, "R") then
-			opts = vim.tbl_extend("keep", opts, parse(path, config))
-			if opts.root then
-				break
-			end
+		opts = vim.tbl_extend("keep", opts, parse(path, config))
+		if opts.root then
+			break
 		end
 
 		local parent = dirname(curdir)
