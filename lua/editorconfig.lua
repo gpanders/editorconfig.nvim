@@ -170,14 +170,15 @@ function M.config()
 
 	for opt, val in pairs(opts) do
 		if val ~= "unset" and apply_option[opt] and not pcall(apply_option[opt], val, opts) then
-			vim.api.nvim_err_writeln(string.format("editorconfig: invalid value for option %s: %s", opt, val))
+			local msg = string.format("editorconfig: invalid value for option %s: %s", opt, val)
+			vim.notify(msg, vim.log.levels.ERROR)
 		end
 	end
 end
 
 function M.trim_trailing_whitespace()
 	local view = vim.fn.winsaveview()
-	vim.cmd("silent keepjumps keeppatterns %s/\\s\\+$//e")
+	vim.api.nvim_command("silent keepjumps keeppatterns %s/\\s\\+$//e")
 	vim.fn.winrestview(view)
 end
 
