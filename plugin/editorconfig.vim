@@ -20,8 +20,13 @@ if exists('g:loaded_editorconfig') || !has('nvim')
 endif
 let g:loaded_editorconfig = 1
 
-" The autocmds must be set in the after/ directory to ensure they will run
-" last
+function! s:load(...)
+    lua require('editorconfig').config()
+endfunction
+
 augroup editorconfig
-    autocmd! BufNewFile,BufRead,BufFilePost * lua require('editorconfig').config()
+    " Use a timer with value 0 to defer executing the autocommand until after
+    " all other autocommands have run. This will ensure that settings applied
+    " by editorconfig take highest precedence.
+    autocmd! BufNewFile,BufRead,BufFilePost * call timer_start(0, function('s:load'))
 augroup END
