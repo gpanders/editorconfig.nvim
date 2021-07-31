@@ -35,6 +35,22 @@ local function dirname(path)
 	return path:match(string.format("^(.+)%s[^%s]+", pathsep, pathsep)) or path
 end
 
+local function parseline(line)
+	if not line:find("^%s*[^ #;]") then
+		return
+	end
+
+	local glob = string.match(line:match("%b[]") or "", "%[([^%]]+)")
+	if glob then
+		return glob, nil
+	end
+
+	local key, val = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
+	if key then
+		return nil, key:lower(), val:lower()
+	end
+end
+
 local function parse(filepath, config)
 	local pat
 	local opts = {}
@@ -46,25 +62,19 @@ local function parse(filepath, config)
 	end
 
 	for line in f:lines() do
-		if line:find("^%s*[^ #;]") then
-			local glob = string.match(line:match("%b[]") or "", "%[([^%]]+)")
-			if glob then
-				if glob:find(pathsep) then
-					glob = confdir .. pathsep .. glob:gsub("^" .. pathsep, "")
-				else
-					glob = "**" .. pathsep .. glob
-				end
-				pat = vim.regex(glob2regpat(glob))
+		local glob, key, val = parseline(line)
+		if glob then
+			if glob:find(pathsep) then
+				glob = confdir .. pathsep .. glob:gsub("^" .. pathsep, "")
 			else
-				local key, val = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
-				if key then
-					key, val = key:lower(), val:lower()
-					if key == "root" then
-						opts.root = val == "true"
-					elseif pat and pat:match_str(filepath) then
-						opts[key] = val
-					end
-				end
+				glob = "**" .. pathsep .. glob
+			end
+			pat = vim.regex(glob2regpat(glob))
+		elseif key then
+			if key == "root" then
+				opts.root = val == "true"
+			elseif pat and pat:match_str(filepath) then
+				opts[key] = val
 			end
 		end
 	end
