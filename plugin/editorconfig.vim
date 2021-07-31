@@ -20,7 +20,7 @@ if exists('g:loaded_editorconfig') || !has('nvim')
 endif
 let g:loaded_editorconfig = 1
 
-function! s:load(...)
+function! s:config(...)
     lua require('editorconfig').config()
 endfunction
 
@@ -28,5 +28,5 @@ augroup editorconfig
     " Use a timer with value 0 to defer executing the autocommand until after
     " all other autocommands have run. This will ensure that settings applied
     " by editorconfig take highest precedence.
-    autocmd! BufNewFile,BufRead,BufFilePost * call timer_start(0, function('s:load'))
+    autocmd! BufNewFile,BufRead,BufFilePost * call timer_start(0, function('s:config'))
 augroup END
