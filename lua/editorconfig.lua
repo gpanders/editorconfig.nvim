@@ -143,7 +143,7 @@ local function config()
           if (nil ~= _0_) then
             local func = _0_
             if not pcall(func, val, opts) then
-              vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.ERROR)
+              vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
             end
           end
         end

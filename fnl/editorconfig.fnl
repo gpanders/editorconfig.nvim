@@ -135,7 +135,7 @@
               func (when (not (pcall func val opts))
                      (vim.notify
                        (: "editorconfig: invalid value for option %s: %s" :format opt val)
-                       vim.log.levels.ERROR)))))))))
+                       vim.log.levels.WARN)))))))))
 
 (fn trim_trailing_whitespace []
   (let [view (vim.fn.winsaveview)]
