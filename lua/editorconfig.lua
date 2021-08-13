@@ -60,14 +60,14 @@ apply.insert_final_newline = function(val)
 end
 local function glob2regpat(glob)
   local placeholder = "@@PLACEHOLDER@@"
-  return string.gsub(vim.fn.glob2regpat(vim.fn.substitute(glob:gsub("{(%d+)%.%.(%d+)}", "[%1-%2]"), "\\*\\@<!\\*\\*\\@!", placeholder, "g")), placeholder, ("[^" .. pathsep .. "]*"))
+  return string.gsub(vim.fn.glob2regpat(vim.fn.substitute(string.gsub(glob, "{(%d+)%.%.(%d+)}", "[%1-%2]"), "\\*\\@<!\\*\\*\\@!", placeholder, "g")), placeholder, ("[^" .. pathsep .. "]*"))
 end
 local function dirname(path)
-  return (path:match(string.format("^(.+)%s[^%s]+", pathsep, pathsep)) or path)
+  return (path:match(("^(.+)%s[^%s]+"):format(pathsep, pathsep)) or path)
 end
 local function parseline(line)
   if line:find("^%s*[^ #;]") then
-    local _0_ = string.match((line:match("%b[]") or ""), "%[([^%]]+)")
+    local _0_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
     if (nil ~= _0_) then
       local glob = _0_
       return glob, nil, nil
@@ -119,7 +119,7 @@ local function config()
   if ((vim.bo.buftype == "") and vim.bo.modifiable) then
     local bufnr = vim.api.nvim_get_current_buf()
     local path = vim.api.nvim_buf_get_name(bufnr)
-    if not (path == "") then
+    if (path ~= "") then
       local done_3f = false
       local opts = {}
       local curdir = dirname(path)
@@ -138,8 +138,14 @@ local function config()
         end
       end
       for opt, val in pairs(opts) do
-        if (not (val == "unset") and apply[opt] and not pcall(apply[opt], val, opts)) then
-          vim.notify(string.format("editorconfig: invalid value for option %s: %s", opt, val), vim.log.levels.ERROR)
+        if (val ~= "unset") then
+          local _0_ = apply[opt]
+          if (nil ~= _0_) then
+            local func = _0_
+            if not pcall(func, val, opts) then
+              vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.ERROR)
+            end
+          end
         end
       end
       return nil

@@ -74,17 +74,18 @@
 ; replace the placeholder with the actual regex pattern
 (fn glob2regpat [glob]
   (local placeholder "@@PLACEHOLDER@@")
-  (-> (glob:gsub "{(%d+)%.%.(%d+)}" "[%1-%2]")
+  (-> glob
+      (string.gsub "{(%d+)%.%.(%d+)}" "[%1-%2]")
       (vim.fn.substitute "\\*\\@<!\\*\\*\\@!" placeholder :g)
       (vim.fn.glob2regpat)
       (string.gsub placeholder (.. "[^" pathsep "]*"))))
 
 (fn dirname [path]
-  (or (path:match (string.format "^(.+)%s[^%s]+" pathsep pathsep)) path))
+  (or (path:match (: "^(.+)%s[^%s]+" :format pathsep pathsep)) path))
 
 (fn parseline [line]
   (when (line:find "^%s*[^ #;]")
-    (match (string.match (or (line:match "%b[]") "") "%[([^%]]+)")
+    (match (: (or (line:match "%b[]") "") :match "%[([^%]]+)")
       glob (values glob nil nil)
       _ (match (line:match "^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
           (key val) (values nil (key:lower) (val:lower))))))
@@ -100,7 +101,10 @@
           glob (let [glob (if (glob:find pathsep)
                               (.. confdir pathsep (glob:gsub (.. "^" pathsep) ""))
                               (.. "**" pathsep glob))]
-                 (set pat (vim.regex (glob2regpat glob))))
+                 (-> glob
+                     (glob2regpat)
+                     (vim.regex)
+                     (->> (set pat))))
           (nil key val) (if (= key :root)
                             (tset opts :root (= val :true))
                             (and pat (pat:match_str filepath))
@@ -112,7 +116,7 @@
   (when (and (= vim.bo.buftype "") vim.bo.modifiable)
     (let [bufnr (vim.api.nvim_get_current_buf)
           path (vim.api.nvim_buf_get_name bufnr)]
-      (when (not (= path ""))
+      (when (not= path "")
         (var done? false)
         (var opts {})
         (var curdir (dirname path))
@@ -126,10 +130,12 @@
                       (set done? true)
                       (set curdir parent))))))
         (each [opt val (pairs opts)]
-          (when (and (not (= val :unset)) (. apply opt) (not (pcall (. apply opt) val opts)))
-            (vim.notify
-              (string.format "editorconfig: invalid value for option %s: %s" opt val)
-              vim.log.levels.ERROR)))))))
+          (when (not= val :unset)
+            (match (. apply opt)
+              func (when (not (pcall func val opts))
+                     (vim.notify
+                       (: "editorconfig: invalid value for option %s: %s" :format opt val)
+                       vim.log.levels.ERROR)))))))))
 
 (fn trim_trailing_whitespace []
   (let [view (vim.fn.winsaveview)]
