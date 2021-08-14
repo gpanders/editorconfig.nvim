@@ -20,13 +20,15 @@ if exists('g:loaded_editorconfig') || !has('nvim')
 endif
 let g:loaded_editorconfig = 1
 
-function! s:config(...)
+function! s:load(...)
     lua require('editorconfig').config()
+    autocmd! editorconfig BufNewFile,BufRead,BufFilePost * lua require('editorconfig').config()
 endfunction
 
 augroup editorconfig
-    " Use a timer with value 0 to defer executing the autocommand until after
-    " all other autocommands have run. This will ensure that settings applied
-    " by editorconfig take highest precedence.
-    autocmd! BufNewFile,BufRead,BufFilePost * call timer_start(0, function('s:config'))
+    if v:vim_did_enter
+        call s:load()
+    else
+        autocmd VimEnter * ++nested call s:load()
+    endif
 augroup END
