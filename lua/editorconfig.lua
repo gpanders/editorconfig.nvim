@@ -55,8 +55,11 @@ apply.trim_trailing_whitespace = function(val)
 end
 apply.insert_final_newline = function(val)
   assert(((val == "true") or (val == "false")))
-  vim.bo.fixendofline = (val == "true")
-  return nil
+  if (val ~= "true") then
+    vim.bo.fixendofline = false
+    vim.bo.endofline = false
+    return nil
+  end
 end
 local function glob2regpat(glob)
   local placeholder = "@@PLACEHOLDER@@"
@@ -67,16 +70,16 @@ local function dirname(path)
 end
 local function parseline(line)
   if line:find("^%s*[^ #;]") then
-    local _0_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
-    if (nil ~= _0_) then
-      local glob = _0_
+    local _7_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
+    if (nil ~= _7_) then
+      local glob = _7_
       return glob, nil, nil
     else
-      local _ = _0_
-      local _1_, _2_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
-      if ((nil ~= _1_) and (nil ~= _2_)) then
-        local key = _1_
-        local val = _2_
+      local _ = _7_
+      local _8_, _9_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
+      if ((nil ~= _8_) and (nil ~= _9_)) then
+        local key = _8_
+        local val = _9_
         return nil, key:lower(), val:lower()
       end
     end
@@ -90,9 +93,9 @@ local function parse(filepath, config)
     local f = io.open(config)
     if f then
       for line in f:lines() do
-        local _0_, _1_, _2_ = parseline(line)
-        if (nil ~= _0_) then
-          local glob = _0_
+        local _13_, _14_, _15_ = parseline(line)
+        if (nil ~= _13_) then
+          local glob = _13_
           local glob0
           if glob:find(pathsep) then
             glob0 = (confdir .. pathsep .. glob:gsub(("^" .. pathsep), ""))
@@ -100,9 +103,9 @@ local function parse(filepath, config)
             glob0 = ("**" .. pathsep .. glob)
           end
           pat = vim.regex(glob2regpat(glob0))
-        elseif ((_0_ == nil) and (nil ~= _1_) and (nil ~= _2_)) then
-          local key = _1_
-          local val = _2_
+        elseif ((_13_ == nil) and (nil ~= _14_) and (nil ~= _15_)) then
+          local key = _14_
+          local val = _15_
           if (key == "root") then
             opts["root"] = (val == "true")
           elseif (pat and pat:match_str(filepath)) then
@@ -139,9 +142,9 @@ local function config()
       end
       for opt, val in pairs(opts) do
         if (val ~= "unset") then
-          local _0_ = apply[opt]
-          if (nil ~= _0_) then
-            local func = _0_
+          local _22_ = apply[opt]
+          if (nil ~= _22_) then
+            local func = _22_
             if not pcall(func, val, opts) then
               vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
             end

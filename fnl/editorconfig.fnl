@@ -65,7 +65,9 @@
 
 (fn apply.insert_final_newline [val]
   (assert (or (= val :true) (= val :false)))
-  (set vim.bo.fixendofline (= val :true)))
+  (when (not= val :true)
+    (set vim.bo.fixendofline false)
+    (set vim.bo.endofline false)))
 
 ; Modified version of glob2regpat that does not match path separators on *.
 ; Basically, this replaces single instances of * with the regex pattern [^/]*.
