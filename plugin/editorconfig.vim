@@ -21,7 +21,9 @@ endif
 let g:loaded_editorconfig = 1
 
 function! s:load(...)
-    lua require('editorconfig').config()
+    for buf in nvim_list_bufs()
+        call luaeval('require("editorconfig").config(_A)', buf)
+    endfor
     autocmd! editorconfig BufNewFile,BufRead,BufFilePost * lua require('editorconfig').config()
 endfunction
 

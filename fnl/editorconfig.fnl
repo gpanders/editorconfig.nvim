@@ -120,9 +120,12 @@
       (f:close)))
   opts)
 
-(fn config []
+(fn config [bufnr]
   (when (and (= vim.bo.buftype "") vim.bo.modifiable)
-    (let [path (vim.api.nvim_buf_get_name 0)]
+    (let [bufnr (if (and bufnr (not= bufnr 0))
+                    bufnr
+                    (vim.api.nvim_get_current_buf))
+          path (vim.api.nvim_buf_get_name bufnr)]
       (when (not= path "")
         (local opts {})
         (var curdir (dirname path))
