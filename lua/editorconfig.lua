@@ -92,12 +92,11 @@ local function parseline(line)
     end
   end
 end
-local function parse(filepath, config)
+local function parse(filepath, dir)
   local pat = nil
   local opts = {}
   do
-    local confdir = dirname(config)
-    local f = io.open(config)
+    local f = io.open((dir .. "/.editorconfig"))
     if f then
       for line in f:lines() do
         local _14_, _15_, _16_ = parseline(line)
@@ -127,15 +126,17 @@ local function parse(filepath, config)
 end
 local function config()
   if ((vim.bo.buftype == "") and vim.bo.modifiable) then
-    local bufnr = vim.api.nvim_get_current_buf()
-    local path = vim.api.nvim_buf_get_name(bufnr)
+    local path = vim.api.nvim_buf_get_name(0)
     if (path ~= "") then
-      local done_3f = false
       local opts = {}
       local curdir = dirname(path)
+      local done_3f = false
       while not done_3f do
-        local config0 = (curdir .. "/.editorconfig")
-        opts = vim.tbl_extend("keep", opts, parse(path, config0))
+        for k, v in pairs(parse(path, curdir)) do
+          if (opts[k] == nil) then
+            opts[k] = v
+          end
+        end
         if opts.root then
           done_3f = true
         else
@@ -149,9 +150,9 @@ local function config()
       end
       for opt, val in pairs(opts) do
         if (val ~= "unset") then
-          local _23_ = apply[opt]
-          if (nil ~= _23_) then
-            local func = _23_
+          local _24_ = apply[opt]
+          if (nil ~= _24_) then
+            local func = _24_
             if not pcall(func, val, opts) then
               vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
             end

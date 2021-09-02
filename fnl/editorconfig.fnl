@@ -98,11 +98,10 @@
       _ (match (line:match "^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
           (key val) (values nil (key:lower) (val:lower))))))
 
-(fn parse [filepath config]
+(fn parse [filepath dir]
   (var pat nil)
   (local opts {})
-  (let [confdir (dirname config)
-        f (io.open config)]
+  (let [f (io.open (.. dir "/.editorconfig"))]
     (when f
       (each [line (f:lines)]
         (match (parseline line)
@@ -123,21 +122,21 @@
 
 (fn config []
   (when (and (= vim.bo.buftype "") vim.bo.modifiable)
-    (let [bufnr (vim.api.nvim_get_current_buf)
-          path (vim.api.nvim_buf_get_name bufnr)]
+    (let [path (vim.api.nvim_buf_get_name 0)]
       (when (not= path "")
-        (var done? false)
-        (var opts {})
+        (local opts {})
         (var curdir (dirname path))
+        (var done? false)
         (while (not done?)
-          (let [config (.. curdir "/.editorconfig")]
-            (set opts (vim.tbl_extend :keep opts (parse path config)))
-            (if opts.root
-                (set done? true)
-                (let [parent (dirname curdir)]
-                  (if (= parent curdir)
-                      (set done? true)
-                      (set curdir parent))))))
+          (each [k v (pairs (parse path curdir))]
+            (when (= (. opts k) nil)
+              (tset opts k v)))
+          (if opts.root
+              (set done? true)
+              (let [parent (dirname curdir)]
+                (if (= parent curdir)
+                    (set done? true)
+                    (set curdir parent)))))
         (each [opt val (pairs opts)]
           (when (not= val :unset)
             (match (. apply opt)
