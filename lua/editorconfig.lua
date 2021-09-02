@@ -1,64 +1,55 @@
 local is_win_3f = (vim.fn.has("win32") == 1)
 local apply = {}
-apply.charset = function(val)
+apply.charset = function(bufnr, val)
   assert(vim.tbl_contains({"utf-8", "utf-8-bom", "latin1", "utf-16be", "utf-16le"}, val))
   if ((val == "utf-8") or (val == "utf-8-bom")) then
-    vim.bo.fileencoding = "utf-8"
-    vim.bo.bomb = (val == "utf-8-bom")
-    return nil
+    vim.api.nvim_buf_set_option(bufnr, "fileencoding", "utf-8")
+    return vim.api.nvim_buf_set_option(bufnr, "bomb", (val == "utf-8-bom"))
   else
-    vim.bo.fileencoding = val
-    return nil
+    return vim.api.nvim_buf_set_option(bufnr, "fileencoding", val)
   end
 end
-apply.end_of_line = function(val)
-  vim.bo.fileformat = assert(({cr = "mac", crlf = "dos", lf = "unix"})[val])
-  return nil
+apply.end_of_line = function(bufnr, val)
+  return vim.api.nvim_buf_set_option(bufnr, "fileformat", assert(({cr = "mac", crlf = "dos", lf = "unix"})[val]))
 end
-apply.indent_style = function(val, opts)
+apply.indent_style = function(bufnr, val, opts)
   assert(((val == "tab") or (val == "space")))
-  vim.bo.expandtab = (val == "space")
+  vim.api.nvim_buf_set_option(bufnr, "expandtab", (val == "space"))
   if ((val == "tab") and not opts.indent_size) then
-    vim.bo.shiftwidth = 0
-    vim.bo.softtabstop = 0
-    return nil
+    vim.api.nvim_buf_set_option(bufnr, "shiftwidth", 0)
+    return vim.api.nvim_buf_set_option(bufnr, "softtabstop", 0)
   end
 end
-apply.indent_size = function(val, opts)
+apply.indent_size = function(bufnr, val, opts)
   if (val == "tab") then
-    vim.bo.shiftwidth = 0
-    vim.bo.softtabstop = 0
-    return nil
+    vim.api.nvim_buf_set_option(bufnr, "shiftwidth", 0)
+    return vim.api.nvim_buf_set_option(bufnr, "softtabstop", 0)
   else
     local n = assert(tonumber(val))
-    vim.bo.shiftwidth = n
-    vim.bo.softtabstop = -1
+    vim.api.nvim_buf_set_option(bufnr, "shiftwidth", n)
+    vim.api.nvim_buf_set_option(bufnr, "softtabstop", -1)
     if not opts.tab_width then
-      vim.bo.tabstop = n
-      return nil
+      return vim.api.nvim_buf_set_option(bufnr, "tabstop", n)
     end
   end
 end
-apply.tab_width = function(val)
-  vim.bo.tabstop = assert(tonumber(val))
-  return nil
+apply.tab_width = function(bufnr, val)
+  return vim.api.nvim_buf_set_option(bufnr, "tabstop", assert(tonumber(val)))
 end
-apply.max_line_length = function(val)
-  vim.bo.textwidth = assert(tonumber(val))
-  return nil
+apply.max_line_length = function(bufnr, val)
+  return vim.api.nvim_buf_set_option(bufnr, "textwidth", assert(tonumber(val)))
 end
-apply.trim_trailing_whitespace = function(val)
+apply.trim_trailing_whitespace = function(bufnr, val)
   assert(((val == "true") or (val == "false")))
   if (val == "true") then
     return vim.api.nvim_command("autocmd! editorconfig BufWritePre <buffer> lua require('editorconfig').trim_trailing_whitespace()")
   end
 end
-apply.insert_final_newline = function(val)
+apply.insert_final_newline = function(bufnr, val)
   assert(((val == "true") or (val == "false")))
   if (val ~= "true") then
-    vim.bo.fixendofline = false
-    vim.bo.endofline = false
-    return nil
+    vim.api.nvim_buf_set_option(bufnr, "fixendofline", false)
+    return vim.api.nvim_buf_set_option(bufnr, "endofline", false)
   end
 end
 local function glob2regpat(glob)
@@ -125,48 +116,46 @@ local function parse(filepath, dir)
   return opts
 end
 local function config(bufnr)
-  if ((vim.bo.buftype == "") and vim.bo.modifiable) then
-    local bufnr0
-    if (bufnr and (bufnr ~= 0)) then
-      bufnr0 = bufnr
-    else
-      bufnr0 = vim.api.nvim_get_current_buf()
-    end
-    local path = vim.api.nvim_buf_get_name(bufnr0)
-    if (path ~= "") then
-      local opts = {}
-      local curdir = dirname(path)
-      local done_3f = false
-      while not done_3f do
-        for k, v in pairs(parse(path, curdir)) do
-          if (opts[k] == nil) then
-            opts[k] = v
-          end
+  local bufnr0
+  if (bufnr and (bufnr ~= 0)) then
+    bufnr0 = bufnr
+  else
+    bufnr0 = vim.api.nvim_get_current_buf()
+  end
+  local path = vim.api.nvim_buf_get_name(bufnr0)
+  if ((vim.api.nvim_buf_get_option(bufnr0, "buftype") == "") and vim.api.nvim_buf_get_option(bufnr0, "modifiable") and (path ~= "")) then
+    local opts = {}
+    local curdir = dirname(path)
+    local done_3f = false
+    while not done_3f do
+      for k, v in pairs(parse(path, curdir)) do
+        if (opts[k] == nil) then
+          opts[k] = v
         end
-        if opts.root then
+      end
+      if opts.root then
+        done_3f = true
+      else
+        local parent = dirname(curdir)
+        if (parent == curdir) then
           done_3f = true
         else
-          local parent = dirname(curdir)
-          if (parent == curdir) then
-            done_3f = true
-          else
-            curdir = parent
-          end
+          curdir = parent
         end
       end
-      for opt, val in pairs(opts) do
-        if (val ~= "unset") then
-          local _25_ = apply[opt]
-          if (nil ~= _25_) then
-            local func = _25_
-            if not pcall(func, val, opts) then
-              vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
-            end
-          end
-        end
-      end
-      return nil
     end
+    for opt, val in pairs(opts) do
+      if (val ~= "unset") then
+        local _25_ = apply[opt]
+        if (nil ~= _25_) then
+          local func = _25_
+          if not pcall(func, bufnr0, val, opts) then
+            vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
+          end
+        end
+      end
+    end
+    return nil
   end
 end
 local function trim_trailing_whitespace()

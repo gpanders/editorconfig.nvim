@@ -23,52 +23,58 @@
   `(vim.api.nvim_command
     ,(string.format "autocmd! editorconfig %s <buffer> %s" event action)))
 
-(fn apply.charset [val]
+(macro get-buffer-option [bufnr name]
+  `(vim.api.nvim_buf_get_option ,bufnr ,name))
+
+(macro set-buffer-option [bufnr name val]
+  `(vim.api.nvim_buf_set_option ,bufnr ,name ,val))
+
+(fn apply.charset [bufnr val]
   (assert (vim.tbl_contains [:utf-8 :utf-8-bom :latin1 :utf-16be :utf-16le] val))
   (if (or (= val :utf-8) (= val :utf-8-bom))
       (do
-        (set vim.bo.fileencoding :utf-8)
-        (set vim.bo.bomb (= val :utf-8-bom)))
-      (set vim.bo.fileencoding val)))
+        (set-buffer-option bufnr :fileencoding :utf-8)
+        (set-buffer-option bufnr :bomb (= val :utf-8-bom)))
+      (set-buffer-option bufnr :fileencoding val)))
 
-(fn apply.end_of_line [val]
-  (set vim.bo.fileformat (assert (. {:lf :unix :crlf :dos :cr :mac} val))))
+(fn apply.end_of_line [bufnr val]
+  (set-buffer-option bufnr :fileformat (assert (. {:lf :unix :crlf :dos :cr :mac} val))))
 
-(fn apply.indent_style [val opts]
+(fn apply.indent_style [bufnr val opts]
   (assert (or (= val :tab) (= val :space)))
-  (set vim.bo.expandtab (= val :space))
+  (set-buffer-option bufnr :expandtab (= val :space))
   (when (and (= val :tab) (not opts.indent_size))
-    (set vim.bo.shiftwidth 0)
-    (set vim.bo.softtabstop 0)))
+    (set-buffer-option bufnr :shiftwidth 0)
+    (set-buffer-option bufnr :softtabstop 0)))
 
-(fn apply.indent_size [val opts]
+(fn apply.indent_size [bufnr val opts]
   (if (= val :tab)
       (do
-        (set vim.bo.shiftwidth 0)
-        (set vim.bo.softtabstop 0))
+        (set-buffer-option bufnr :shiftwidth 0)
+        (set-buffer-option bufnr :softtabstop 0))
       (let [n (assert (tonumber val))]
-        (set vim.bo.shiftwidth n)
-        (set vim.bo.softtabstop -1)
+        (set-buffer-option bufnr :shiftwidth n)
+        (set-buffer-option bufnr :softtabstop -1)
         (when (not opts.tab_width)
-          (set vim.bo.tabstop n)))))
+          (set-buffer-option bufnr :tabstop n)))))
 
-(fn apply.tab_width [val]
-  (set vim.bo.tabstop (assert (tonumber val))))
+(fn apply.tab_width [bufnr val]
+  (set-buffer-option bufnr :tabstop (assert (tonumber val))))
 
-(fn apply.max_line_length [val]
-  (set vim.bo.textwidth (assert (tonumber val))))
+(fn apply.max_line_length [bufnr val]
+  (set-buffer-option bufnr :textwidth (assert (tonumber val))))
 
-(fn apply.trim_trailing_whitespace [val]
+(fn apply.trim_trailing_whitespace [bufnr val]
   (assert (or (= val :true) (= val :false)))
   (when (= val :true)
     (autocmd :BufWritePre
              "lua require('editorconfig').trim_trailing_whitespace()")))
 
-(fn apply.insert_final_newline [val]
+(fn apply.insert_final_newline [bufnr val]
   (assert (or (= val :true) (= val :false)))
   (when (not= val :true)
-    (set vim.bo.fixendofline false)
-    (set vim.bo.endofline false)))
+    (set-buffer-option bufnr :fixendofline false)
+    (set-buffer-option bufnr :endofline false)))
 
 ; Modified version of glob2regpat that does not match path separators on *.
 ; Basically, this replaces single instances of * with the regex pattern [^/]*.
@@ -121,32 +127,31 @@
   opts)
 
 (fn config [bufnr]
-  (when (and (= vim.bo.buftype "") vim.bo.modifiable)
-    (let [bufnr (if (and bufnr (not= bufnr 0))
-                    bufnr
-                    (vim.api.nvim_get_current_buf))
-          path (vim.api.nvim_buf_get_name bufnr)]
-      (when (not= path "")
-        (local opts {})
-        (var curdir (dirname path))
-        (var done? false)
-        (while (not done?)
-          (each [k v (pairs (parse path curdir))]
-            (when (= (. opts k) nil)
-              (tset opts k v)))
-          (if opts.root
-              (set done? true)
-              (let [parent (dirname curdir)]
-                (if (= parent curdir)
-                    (set done? true)
-                    (set curdir parent)))))
-        (each [opt val (pairs opts)]
-          (when (not= val :unset)
-            (match (. apply opt)
-              func (when (not (pcall func val opts))
-                     (vim.notify
-                       (: "editorconfig: invalid value for option %s: %s" :format opt val)
-                       vim.log.levels.WARN)))))))))
+  (let [bufnr (if (and bufnr (not= bufnr 0))
+                  bufnr
+                  (vim.api.nvim_get_current_buf))
+        path (vim.api.nvim_buf_get_name bufnr)]
+    (when (and (= (get-buffer-option bufnr :buftype) "") (get-buffer-option bufnr :modifiable) (not= path ""))
+      (local opts {})
+      (var curdir (dirname path))
+      (var done? false)
+      (while (not done?)
+        (each [k v (pairs (parse path curdir))]
+          (when (= (. opts k) nil)
+            (tset opts k v)))
+        (if opts.root
+            (set done? true)
+            (let [parent (dirname curdir)]
+              (if (= parent curdir)
+                  (set done? true)
+                  (set curdir parent)))))
+      (each [opt val (pairs opts)]
+        (when (not= val :unset)
+          (match (. apply opt)
+            func (when (not (pcall func bufnr val opts))
+                   (vim.notify
+                     (: "editorconfig: invalid value for option %s: %s" :format opt val)
+                     vim.log.levels.WARN))))))))
 
 (fn trim_trailing_whitespace []
   (let [view (vim.fn.winsaveview)]
