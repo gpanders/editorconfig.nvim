@@ -1,4 +1,4 @@
-local pathsep = string.sub(package.config, 1, 1)
+local is_win_3f = (vim.fn.has("win32") == 1)
 local apply = {}
 apply.charset = function(val)
   assert(vim.tbl_contains({"utf-8", "utf-8-bom", "latin1", "utf-16be", "utf-16le"}, val))
@@ -63,23 +63,30 @@ apply.insert_final_newline = function(val)
 end
 local function glob2regpat(glob)
   local placeholder = "@@PLACEHOLDER@@"
-  return string.gsub(vim.fn.glob2regpat(vim.fn.substitute(string.gsub(glob, "{(%d+)%.%.(%d+)}", "[%1-%2]"), "\\*\\@<!\\*\\*\\@!", placeholder, "g")), placeholder, ("[^" .. pathsep .. "]*"))
+  return string.gsub(vim.fn.glob2regpat(vim.fn.substitute(string.gsub(glob, "{(%d+)%.%.(%d+)}", "[%1-%2]"), "\\*\\@<!\\*\\*\\@!", placeholder, "g")), placeholder, "[^/]*")
+end
+local function convert_pathseps(path)
+  if is_win_3f then
+    return path:gsub("/", "\\")
+  else
+    return path
+  end
 end
 local function dirname(path)
-  return (path:match(("^(.+)%s[^%s]+"):format(pathsep, pathsep)) or path)
+  return vim.fn.fnamemodify(path, ":h")
 end
 local function parseline(line)
   if line:find("^%s*[^ #;]") then
-    local _7_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
-    if (nil ~= _7_) then
-      local glob = _7_
+    local _8_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
+    if (nil ~= _8_) then
+      local glob = _8_
       return glob, nil, nil
     else
-      local _ = _7_
-      local _8_, _9_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
-      if ((nil ~= _8_) and (nil ~= _9_)) then
-        local key = _8_
-        local val = _9_
+      local _ = _8_
+      local _9_, _10_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
+      if ((nil ~= _9_) and (nil ~= _10_)) then
+        local key = _9_
+        local val = _10_
         return nil, key:lower(), val:lower()
       end
     end
@@ -93,19 +100,19 @@ local function parse(filepath, config)
     local f = io.open(config)
     if f then
       for line in f:lines() do
-        local _13_, _14_, _15_ = parseline(line)
-        if (nil ~= _13_) then
-          local glob = _13_
+        local _14_, _15_, _16_ = parseline(line)
+        if (nil ~= _14_) then
+          local glob = _14_
           local glob0
-          if glob:find(pathsep) then
-            glob0 = (confdir .. pathsep .. glob:gsub(("^" .. pathsep), ""))
+          if glob:find("/") then
+            glob0 = (dir .. "/" .. glob:gsub("^/", ""))
           else
-            glob0 = ("**" .. pathsep .. glob)
+            glob0 = ("**/" .. glob)
           end
-          pat = vim.regex(glob2regpat(glob0))
-        elseif ((_13_ == nil) and (nil ~= _14_) and (nil ~= _15_)) then
-          local key = _14_
-          local val = _15_
+          pat = vim.regex(convert_pathseps(glob2regpat(glob0)))
+        elseif ((_14_ == nil) and (nil ~= _15_) and (nil ~= _16_)) then
+          local key = _15_
+          local val = _16_
           if (key == "root") then
             opts["root"] = (val == "true")
           elseif (pat and pat:match_str(filepath)) then
@@ -127,7 +134,7 @@ local function config()
       local opts = {}
       local curdir = dirname(path)
       while not done_3f do
-        local config0 = (curdir .. pathsep .. ".editorconfig")
+        local config0 = (curdir .. "/.editorconfig")
         opts = vim.tbl_extend("keep", opts, parse(path, config0))
         if opts.root then
           done_3f = true
@@ -142,9 +149,9 @@ local function config()
       end
       for opt, val in pairs(opts) do
         if (val ~= "unset") then
-          local _22_ = apply[opt]
-          if (nil ~= _22_) then
-            local func = _22_
+          local _23_ = apply[opt]
+          if (nil ~= _23_) then
+            local func = _23_
             if not pcall(func, val, opts) then
               vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
             end

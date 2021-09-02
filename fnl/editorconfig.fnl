@@ -15,7 +15,8 @@
 ; You should have received a copy of the GNU General Public License along with
 ; this program.  If not, see <https://www.gnu.org/licenses/>.
 
-(local pathsep (string.sub package.config 1 1))
+(local is-win? (= (vim.fn.has :win32) 1))
+
 (local apply {})
 
 (macro autocmd [event action]
@@ -80,10 +81,15 @@
       (string.gsub "{(%d+)%.%.(%d+)}" "[%1-%2]")
       (vim.fn.substitute "\\*\\@<!\\*\\*\\@!" placeholder :g)
       (vim.fn.glob2regpat)
-      (string.gsub placeholder (.. "[^" pathsep "]*"))))
+      (string.gsub placeholder "[^/]*")))
+
+(fn convert-pathseps [path]
+  (if is-win?
+      (path:gsub "/" "\\")
+      path))
 
 (fn dirname [path]
-  (or (path:match (: "^(.+)%s[^%s]+" :format pathsep pathsep)) path))
+  (vim.fn.fnamemodify path ":h"))
 
 (fn parseline [line]
   (when (line:find "^%s*[^ #;]")
@@ -100,11 +106,12 @@
     (when f
       (each [line (f:lines)]
         (match (parseline line)
-          glob (let [glob (if (glob:find pathsep)
-                              (.. confdir pathsep (glob:gsub (.. "^" pathsep) ""))
-                              (.. "**" pathsep glob))]
+          glob (let [glob (if (glob:find "/")
+                              (.. dir "/" (glob:gsub "^/" ""))
+                              (.. "**/" glob))]
                  (-> glob
                      (glob2regpat)
+                     (convert-pathseps)
                      (vim.regex)
                      (->> (set pat))))
           (nil key val) (if (= key :root)
@@ -123,7 +130,7 @@
         (var opts {})
         (var curdir (dirname path))
         (while (not done?)
-          (let [config (.. curdir pathsep ".editorconfig")]
+          (let [config (.. curdir "/.editorconfig")]
             (set opts (vim.tbl_extend :keep opts (parse path config)))
             (if opts.root
                 (set done? true)
