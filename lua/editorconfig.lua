@@ -116,12 +116,7 @@ local function parse(filepath, dir)
   return opts
 end
 local function config(bufnr)
-  local bufnr0
-  if (bufnr and (bufnr ~= 0)) then
-    bufnr0 = bufnr
-  else
-    bufnr0 = vim.api.nvim_get_current_buf()
-  end
+  local bufnr0 = (bufnr or vim.api.nvim_get_current_buf())
   local path = vim.api.nvim_buf_get_name(bufnr0)
   if ((vim.api.nvim_buf_get_option(bufnr0, "buftype") == "") and vim.api.nvim_buf_get_option(bufnr0, "modifiable") and (path ~= "")) then
     local opts = {}
@@ -146,9 +141,9 @@ local function config(bufnr)
     end
     for opt, val in pairs(opts) do
       if (val ~= "unset") then
-        local _25_ = apply[opt]
-        if (nil ~= _25_) then
-          local func = _25_
+        local _24_ = apply[opt]
+        if (nil ~= _24_) then
+          local func = _24_
           if not pcall(func, bufnr0, val, opts) then
             vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
           end

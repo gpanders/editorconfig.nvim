@@ -127,9 +127,7 @@
   opts)
 
 (fn config [bufnr]
-  (let [bufnr (if (and bufnr (not= bufnr 0))
-                  bufnr
-                  (vim.api.nvim_get_current_buf))
+  (let [bufnr (or bufnr (vim.api.nvim_get_current_buf))
         path (vim.api.nvim_buf_get_name bufnr)]
     (when (and (= (get-buffer-option bufnr :buftype) "") (get-buffer-option bufnr :modifiable) (not= path ""))
       (local opts {})
