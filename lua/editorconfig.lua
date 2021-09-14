@@ -66,7 +66,7 @@ end
 local function dirname(path)
   return vim.fn.fnamemodify(path, ":h")
 end
-local function parseline(line)
+local function parse_line(line)
   if line:find("^%s*[^ #;]") then
     local _8_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
     if (nil ~= _8_) then
@@ -87,30 +87,43 @@ local function parse(filepath, dir)
   local pat = nil
   local opts = {}
   do
-    local f = io.open((dir .. "/.editorconfig"))
-    if f then
-      for line in f:lines() do
-        local _14_, _15_, _16_ = parseline(line)
-        if (nil ~= _14_) then
-          local glob = _14_
-          local glob0
-          if glob:find("/") then
-            glob0 = (dir .. "/" .. glob:gsub("^/", ""))
-          else
-            glob0 = ("**/" .. glob)
-          end
-          pat = vim.regex(convert_pathseps(glob2regpat(glob0)))
-        elseif ((_14_ == nil) and (nil ~= _15_) and (nil ~= _16_)) then
-          local key = _15_
-          local val = _16_
-          if (key == "root") then
-            opts["root"] = (val == "true")
-          elseif (pat and pat:match_str(filepath)) then
-            opts[key] = val
-          end
+    local _14_ = io.open((dir .. "/.editorconfig"))
+    if (nil ~= _14_) then
+      local f = _14_
+      local _ = f
+      local function close_handlers_7_auto(ok_8_auto, ...)
+        _:close()
+        if ok_8_auto then
+          return ...
+        else
+          return error(..., 0)
         end
       end
-      f:close()
+      local function _16_()
+        for line in f:lines() do
+          local _17_, _18_, _19_ = parse_line(line)
+          if (nil ~= _17_) then
+            local glob = _17_
+            local glob0
+            if glob:find("/") then
+              glob0 = (dir .. "/" .. glob:gsub("^/", ""))
+            else
+              glob0 = ("**/" .. glob)
+            end
+            pat = vim.regex(convert_pathseps(glob2regpat(glob0)))
+          elseif ((_17_ == nil) and (nil ~= _18_) and (nil ~= _19_)) then
+            local key = _18_
+            local val = _19_
+            if (key == "root") then
+              opts["root"] = (val == "true")
+            elseif (pat and pat:match_str(filepath)) then
+              opts[key] = val
+            end
+          end
+        end
+        return nil
+      end
+      close_handlers_7_auto(xpcall(_16_, (package.loaded.fennel or debug).traceback))
     end
   end
   return opts
@@ -141,9 +154,9 @@ local function config(bufnr)
     end
     for opt, val in pairs(opts) do
       if (val ~= "unset") then
-        local _24_ = apply[opt]
-        if (nil ~= _24_) then
-          local func = _24_
+        local _27_ = apply[opt]
+        if (nil ~= _27_) then
+          local func = _27_
           if not pcall(func, bufnr0, val, opts) then
             vim.notify(("editorconfig: invalid value for option %s: %s"):format(opt, val), vim.log.levels.WARN)
           end

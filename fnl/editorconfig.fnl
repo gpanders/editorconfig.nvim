@@ -97,7 +97,7 @@
 (fn dirname [path]
   (vim.fn.fnamemodify path ":h"))
 
-(fn parseline [line]
+(fn parse-line [line]
   (when (line:find "^%s*[^ #;]")
     (match (: (or (line:match "%b[]") "") :match "%[([^%]]+)")
       glob (values glob nil nil)
@@ -107,23 +107,22 @@
 (fn parse [filepath dir]
   (var pat nil)
   (local opts {})
-  (let [f (io.open (.. dir "/.editorconfig"))]
-    (when f
-      (each [line (f:lines)]
-        (match (parseline line)
-          glob (let [glob (if (glob:find "/")
-                              (.. dir "/" (glob:gsub "^/" ""))
-                              (.. "**/" glob))]
-                 (-> glob
-                     (glob2regpat)
-                     (convert-pathseps)
-                     (vim.regex)
-                     (->> (set pat))))
-          (nil key val) (if (= key :root)
-                            (tset opts :root (= val :true))
-                            (and pat (pat:match_str filepath))
-                            (tset opts key val))))
-      (f:close)))
+  (match (io.open (.. dir "/.editorconfig"))
+    f (with-open [_ f]
+        (each [line (f:lines)]
+          (match (parse-line line)
+            glob (let [glob (if (glob:find "/")
+                                (.. dir "/" (glob:gsub "^/" ""))
+                                (.. "**/" glob))]
+                   (-> glob
+                       (glob2regpat)
+                       (convert-pathseps)
+                       (vim.regex)
+                       (->> (set pat))))
+            (nil key val) (if (= key :root)
+                              (tset opts :root (= val :true))
+                              (and pat (pat:match_str filepath))
+                              (tset opts key val))))))
   opts)
 
 (fn config [bufnr]
