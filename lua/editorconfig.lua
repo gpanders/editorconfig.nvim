@@ -3,41 +3,49 @@ local apply = {}
 apply.charset = function(bufnr, val)
   assert(vim.tbl_contains({"utf-8", "utf-8-bom", "latin1", "utf-16be", "utf-16le"}, val))
   if ((val == "utf-8") or (val == "utf-8-bom")) then
-    vim.api.nvim_buf_set_option(bufnr, "fileencoding", "utf-8")
-    return vim.api.nvim_buf_set_option(bufnr, "bomb", (val == "utf-8-bom"))
+    vim.bo[bufnr]["fileencoding"] = "utf-8"
+    vim.bo[bufnr]["bomb"] = (val == "utf-8-bom")
+    return nil
   else
-    return vim.api.nvim_buf_set_option(bufnr, "fileencoding", val)
+    vim.bo[bufnr]["fileencoding"] = val
+    return nil
   end
 end
 apply.end_of_line = function(bufnr, val)
-  return vim.api.nvim_buf_set_option(bufnr, "fileformat", assert(({cr = "mac", crlf = "dos", lf = "unix"})[val]))
+  vim.bo[bufnr]["fileformat"] = assert(({cr = "mac", crlf = "dos", lf = "unix"})[val])
+  return nil
 end
 apply.indent_style = function(bufnr, val, opts)
   assert(((val == "tab") or (val == "space")))
-  vim.api.nvim_buf_set_option(bufnr, "expandtab", (val == "space"))
+  do end (vim.bo)[bufnr]["expandtab"] = (val == "space")
   if ((val == "tab") and not opts.indent_size) then
-    vim.api.nvim_buf_set_option(bufnr, "shiftwidth", 0)
-    return vim.api.nvim_buf_set_option(bufnr, "softtabstop", 0)
+    vim.bo[bufnr]["shiftwidth"] = 0
+    vim.bo[bufnr]["softtabstop"] = 0
+    return nil
   end
 end
 apply.indent_size = function(bufnr, val, opts)
   if (val == "tab") then
-    vim.api.nvim_buf_set_option(bufnr, "shiftwidth", 0)
-    return vim.api.nvim_buf_set_option(bufnr, "softtabstop", 0)
+    vim.bo[bufnr]["shiftwidth"] = 0
+    vim.bo[bufnr]["softtabstop"] = 0
+    return nil
   else
     local n = assert(tonumber(val))
-    vim.api.nvim_buf_set_option(bufnr, "shiftwidth", n)
-    vim.api.nvim_buf_set_option(bufnr, "softtabstop", -1)
+    do end (vim.bo)[bufnr]["shiftwidth"] = n
+    vim.bo[bufnr]["softtabstop"] = -1
     if not opts.tab_width then
-      return vim.api.nvim_buf_set_option(bufnr, "tabstop", n)
+      vim.bo[bufnr]["tabstop"] = n
+      return nil
     end
   end
 end
 apply.tab_width = function(bufnr, val)
-  return vim.api.nvim_buf_set_option(bufnr, "tabstop", assert(tonumber(val)))
+  vim.bo[bufnr]["tabstop"] = assert(tonumber(val))
+  return nil
 end
 apply.max_line_length = function(bufnr, val)
-  return vim.api.nvim_buf_set_option(bufnr, "textwidth", assert(tonumber(val)))
+  vim.bo[bufnr]["textwidth"] = assert(tonumber(val))
+  return nil
 end
 apply.trim_trailing_whitespace = function(bufnr, val)
   assert(((val == "true") or (val == "false")))
@@ -48,8 +56,9 @@ end
 apply.insert_final_newline = function(bufnr, val)
   assert(((val == "true") or (val == "false")))
   if (val ~= "true") then
-    vim.api.nvim_buf_set_option(bufnr, "fixendofline", false)
-    return vim.api.nvim_buf_set_option(bufnr, "endofline", false)
+    vim.bo[bufnr]["fixendofline"] = false
+    vim.bo[bufnr]["endofline"] = false
+    return nil
   end
 end
 local function glob2regpat(glob)
@@ -131,7 +140,7 @@ end
 local function config(bufnr)
   local bufnr0 = (bufnr or vim.api.nvim_get_current_buf())
   local path = vim.api.nvim_buf_get_name(bufnr0)
-  if ((vim.api.nvim_buf_get_option(bufnr0, "buftype") == "") and vim.api.nvim_buf_get_option(bufnr0, "modifiable") and (path ~= "")) then
+  if ((vim.bo[bufnr0].buftype == "") and vim.bo[bufnr0].modifiable and (path ~= "")) then
     local opts = {}
     local curdir = dirname(path)
     local done_3f = false

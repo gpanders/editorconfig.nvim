@@ -23,46 +23,40 @@
   `(vim.api.nvim_command
     ,(string.format "autocmd! editorconfig %s <buffer> %s" event action)))
 
-(macro get-buffer-option [bufnr name]
-  `(vim.api.nvim_buf_get_option ,bufnr ,name))
-
-(macro set-buffer-option [bufnr name val]
-  `(vim.api.nvim_buf_set_option ,bufnr ,name ,val))
-
 (fn apply.charset [bufnr val]
   (assert (vim.tbl_contains [:utf-8 :utf-8-bom :latin1 :utf-16be :utf-16le] val))
   (if (or (= val :utf-8) (= val :utf-8-bom))
       (do
-        (set-buffer-option bufnr :fileencoding :utf-8)
-        (set-buffer-option bufnr :bomb (= val :utf-8-bom)))
-      (set-buffer-option bufnr :fileencoding val)))
+        (tset vim.bo bufnr :fileencoding :utf-8)
+        (tset vim.bo bufnr :bomb (= val :utf-8-bom)))
+      (tset vim.bo bufnr :fileencoding val)))
 
 (fn apply.end_of_line [bufnr val]
-  (set-buffer-option bufnr :fileformat (assert (. {:lf :unix :crlf :dos :cr :mac} val))))
+  (tset vim.bo bufnr :fileformat (assert (. {:lf :unix :crlf :dos :cr :mac} val))))
 
 (fn apply.indent_style [bufnr val opts]
   (assert (or (= val :tab) (= val :space)))
-  (set-buffer-option bufnr :expandtab (= val :space))
+  (tset vim.bo bufnr :expandtab (= val :space))
   (when (and (= val :tab) (not opts.indent_size))
-    (set-buffer-option bufnr :shiftwidth 0)
-    (set-buffer-option bufnr :softtabstop 0)))
+    (tset vim.bo bufnr :shiftwidth 0)
+    (tset vim.bo bufnr :softtabstop 0)))
 
 (fn apply.indent_size [bufnr val opts]
   (if (= val :tab)
       (do
-        (set-buffer-option bufnr :shiftwidth 0)
-        (set-buffer-option bufnr :softtabstop 0))
+        (tset vim.bo bufnr :shiftwidth 0)
+        (tset vim.bo bufnr :softtabstop 0))
       (let [n (assert (tonumber val))]
-        (set-buffer-option bufnr :shiftwidth n)
-        (set-buffer-option bufnr :softtabstop -1)
+        (tset vim.bo bufnr :shiftwidth n)
+        (tset vim.bo bufnr :softtabstop -1)
         (when (not opts.tab_width)
-          (set-buffer-option bufnr :tabstop n)))))
+          (tset vim.bo bufnr :tabstop n)))))
 
 (fn apply.tab_width [bufnr val]
-  (set-buffer-option bufnr :tabstop (assert (tonumber val))))
+  (tset vim.bo bufnr :tabstop (assert (tonumber val))))
 
 (fn apply.max_line_length [bufnr val]
-  (set-buffer-option bufnr :textwidth (assert (tonumber val))))
+  (tset vim.bo bufnr :textwidth (assert (tonumber val))))
 
 (fn apply.trim_trailing_whitespace [bufnr val]
   (assert (or (= val :true) (= val :false)))
@@ -73,8 +67,8 @@
 (fn apply.insert_final_newline [bufnr val]
   (assert (or (= val :true) (= val :false)))
   (when (not= val :true)
-    (set-buffer-option bufnr :fixendofline false)
-    (set-buffer-option bufnr :endofline false)))
+    (tset vim.bo bufnr :fixendofline false)
+    (tset vim.bo bufnr :endofline false)))
 
 ; Modified version of glob2regpat that does not match path separators on *.
 ; Basically, this replaces single instances of * with the regex pattern [^/]*.
@@ -128,7 +122,7 @@
 (fn config [bufnr]
   (let [bufnr (or bufnr (vim.api.nvim_get_current_buf))
         path (vim.api.nvim_buf_get_name bufnr)]
-    (when (and (= (get-buffer-option bufnr :buftype) "") (get-buffer-option bufnr :modifiable) (not= path ""))
+    (when (and (= (. vim.bo bufnr :buftype) "") (. vim.bo bufnr :modifiable) (not= path ""))
       (local opts {})
       (var curdir (dirname path))
       (var done? false)
