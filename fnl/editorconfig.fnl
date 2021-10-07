@@ -85,7 +85,7 @@
 
 (fn convert-pathseps [path]
   (if is-win?
-      (path:gsub "/" "\\\\")
+      (path:gsub "\\" "/")
       path))
 
 (fn dirname [path]
@@ -108,11 +108,7 @@
             glob (let [glob (if (glob:find "/")
                                 (.. dir "/" (glob:gsub "^/" ""))
                                 (.. "**/" glob))]
-                   (-> glob
-                       (glob2regpat)
-                       (convert-pathseps)
-                       (vim.regex)
-                       (->> (set pat))))
+                   (-> glob glob2regpat vim.regex (->> (set pat))))
             (nil key val) (if (= key :root)
                               (tset opts :root (= val :true))
                               (and pat (pat:match_str filepath))
@@ -121,7 +117,7 @@
 
 (fn config [bufnr]
   (let [bufnr (or bufnr (vim.api.nvim_get_current_buf))
-        path (vim.api.nvim_buf_get_name bufnr)]
+        path (-> bufnr vim.api.nvim_buf_get_name convert-pathseps)]
     (when (and (= (. vim.bo bufnr :buftype) "") (. vim.bo bufnr :modifiable) (not= path ""))
       (local opts {})
       (var curdir (dirname path))
