@@ -65,13 +65,6 @@ local function glob2regpat(glob)
   local placeholder = "@@PLACEHOLDER@@"
   return string.gsub(vim.fn.glob2regpat(vim.fn.substitute(string.gsub(glob, "{(%d+)%.%.(%d+)}", "[%1-%2]"), "\\*\\@<!\\*\\*\\@!", placeholder, "g")), placeholder, "[^/]*")
 end
-local function convert_pathseps(path)
-  if is_win_3f then
-    return path:gsub("/", "\\")
-  else
-    return path
-  end
-end
 local function dirname(path)
   return vim.fn.fnamemodify(path, ":h")
 end
@@ -92,9 +85,17 @@ local function parse_line(line)
     end
   end
 end
+local function convert_filepath_seps(filepath)
+  if is_win_3f then
+    return filepath:gsub("\\", "/")
+  else
+    return filepath
+  end
+end
 local function parse(filepath, dir)
   local pat = nil
   local opts = {}
+  filepath = convert_filepath_seps(filepath)
   do
     local _14_ = io.open((dir .. "/.editorconfig"))
     if (nil ~= _14_) then
@@ -119,7 +120,7 @@ local function parse(filepath, dir)
             else
               glob0 = ("**/" .. glob)
             end
-            pat = vim.regex(convert_pathseps(glob2regpat(glob0)))
+            pat = vim.regex(glob2regpat(glob0))
           elseif ((_17_ == nil) and (nil ~= _18_) and (nil ~= _19_)) then
             local key = _18_
             local val = _19_
