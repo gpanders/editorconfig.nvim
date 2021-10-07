@@ -85,7 +85,7 @@
 
 (fn convert-pathseps [path]
   (if is-win?
-      (path:gsub "/" "\\")
+      (path:gsub "/" "\\\\")
       path))
 
 (fn dirname [path]

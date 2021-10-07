@@ -67,7 +67,7 @@ local function glob2regpat(glob)
 end
 local function convert_pathseps(path)
   if is_win_3f then
-    return path:gsub("/", "\\")
+    return path:gsub("/", "\\\\")
   else
     return path
   end
