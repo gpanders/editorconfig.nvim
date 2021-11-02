@@ -140,9 +140,8 @@
         (when (not= val :unset)
           (match (. apply opt)
             func (when (not (pcall func bufnr val opts))
-                   (vim.notify
-                     (: "editorconfig: invalid value for option %s: %s" :format opt val)
-                     vim.log.levels.WARN))))))))
+                   (let [msg (: "editorconfig: invalid value for option %s: %s" :format opt val)]
+                     (vim.api.nvim_echo [[msg :WarningMsg]] true {})))))))))
 
 (fn trim_trailing_whitespace []
   (let [view (vim.fn.winsaveview)]
