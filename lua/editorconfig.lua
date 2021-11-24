@@ -67,7 +67,7 @@ local function glob2regpat(glob)
 end
 local function convert_pathseps(path)
   if is_win_3f then
-    return path:gsub("/", "\\")
+    return path:gsub("\\", "/")
   else
     return path
   end
@@ -119,7 +119,7 @@ local function parse(filepath, dir)
             else
               glob0 = ("**/" .. glob)
             end
-            pat = vim.regex(convert_pathseps(glob2regpat(glob0)))
+            pat = vim.regex(glob2regpat(glob0))
           elseif ((_17_ == nil) and (nil ~= _18_) and (nil ~= _19_)) then
             local key = _18_
             local val = _19_
@@ -139,7 +139,7 @@ local function parse(filepath, dir)
 end
 local function config(bufnr)
   local bufnr0 = (bufnr or vim.api.nvim_get_current_buf())
-  local path = vim.api.nvim_buf_get_name(bufnr0)
+  local path = convert_pathseps(vim.api.nvim_buf_get_name(bufnr0))
   if ((vim.bo[bufnr0].buftype == "") and vim.bo[bufnr0].modifiable and (path ~= "")) then
     local opts = {}
     local curdir = dirname(path)
