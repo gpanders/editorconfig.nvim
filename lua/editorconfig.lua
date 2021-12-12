@@ -12,7 +12,7 @@ apply.charset = function(bufnr, val)
   end
 end
 apply.end_of_line = function(bufnr, val)
-  vim.bo[bufnr]["fileformat"] = assert(({cr = "mac", crlf = "dos", lf = "unix"})[val])
+  vim.bo[bufnr]["fileformat"] = assert(({lf = "unix", crlf = "dos", cr = "mac"})[val])
   return nil
 end
 apply.indent_style = function(bufnr, val, opts)
@@ -21,6 +21,8 @@ apply.indent_style = function(bufnr, val, opts)
   if ((val == "tab") and not opts.indent_size) then
     vim.bo[bufnr]["shiftwidth"] = 0
     vim.bo[bufnr]["softtabstop"] = 0
+    return nil
+  else
     return nil
   end
 end
@@ -35,6 +37,8 @@ apply.indent_size = function(bufnr, val, opts)
     vim.bo[bufnr]["softtabstop"] = -1
     if not opts.tab_width then
       vim.bo[bufnr]["tabstop"] = n
+      return nil
+    else
       return nil
     end
   end
@@ -51,6 +55,8 @@ apply.trim_trailing_whitespace = function(bufnr, val)
   assert(((val == "true") or (val == "false")))
   if (val == "true") then
     return vim.api.nvim_command("autocmd! editorconfig BufWritePre <buffer> lua require('editorconfig').trim_trailing_whitespace()")
+  else
+    return nil
   end
 end
 apply.insert_final_newline = function(bufnr, val)
@@ -58,6 +64,8 @@ apply.insert_final_newline = function(bufnr, val)
   if (val ~= "true") then
     vim.bo[bufnr]["fixendofline"] = false
     vim.bo[bufnr]["endofline"] = false
+    return nil
+  else
     return nil
   end
 end
@@ -81,15 +89,21 @@ local function parse_line(line)
     if (nil ~= _8_) then
       local glob = _8_
       return glob, nil, nil
-    else
+    elseif true then
       local _ = _8_
       local _9_, _10_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
       if ((nil ~= _9_) and (nil ~= _10_)) then
         local key = _9_
         local val = _10_
         return nil, key:lower(), val:lower()
+      else
+        return nil
       end
+    else
+      return nil
     end
+  else
+    return nil
   end
 end
 local function parse(filepath, dir)
@@ -100,9 +114,9 @@ local function parse(filepath, dir)
     if (nil ~= _14_) then
       local f = _14_
       local _ = f
-      local function close_handlers_7_auto(ok_8_auto, ...)
+      local function close_handlers_8_auto(ok_9_auto, ...)
         _:close()
-        if ok_8_auto then
+        if ok_9_auto then
           return ...
         else
           return error(..., 0)
@@ -127,12 +141,15 @@ local function parse(filepath, dir)
               opts["root"] = (val == "true")
             elseif (pat and pat:match_str(filepath)) then
               opts[key] = val
+            else
             end
+          else
           end
         end
         return nil
       end
-      close_handlers_7_auto(xpcall(_16_, (package.loaded.fennel or debug).traceback))
+      close_handlers_8_auto(_G.xpcall(_16_, (package.loaded.fennel or debug).traceback))
+    else
     end
   end
   return opts
@@ -148,6 +165,7 @@ local function config(bufnr)
       for k, v in pairs(parse(path, curdir)) do
         if (opts[k] == nil) then
           opts[k] = v
+        else
         end
       end
       if opts.root then
@@ -161,18 +179,26 @@ local function config(bufnr)
         end
       end
     end
+    local applied = {}
     for opt, val in pairs(opts) do
       if (val ~= "unset") then
         local _27_ = apply[opt]
         if (nil ~= _27_) then
           local func = _27_
-          if not pcall(func, bufnr0, val, opts) then
+          if pcall(func, bufnr0, val, opts) then
+            applied[opt] = val
+          else
             local msg = ("editorconfig: invalid value for option %s: %s"):format(opt, val)
             vim.api.nvim_echo({{msg, "WarningMsg"}}, true, {})
           end
+        else
         end
+      else
       end
     end
+    vim.b[bufnr0]["editorconfig"] = applied
+    return nil
+  else
     return nil
   end
 end

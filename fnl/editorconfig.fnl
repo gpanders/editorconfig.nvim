@@ -132,12 +132,15 @@
               (if (= parent curdir)
                   (set done? true)
                   (set curdir parent)))))
+      (var applied {})
       (each [opt val (pairs opts)]
         (when (not= val :unset)
           (match (. apply opt)
-            func (when (not (pcall func bufnr val opts))
-                   (let [msg (: "editorconfig: invalid value for option %s: %s" :format opt val)]
-                     (vim.api.nvim_echo [[msg :WarningMsg]] true {})))))))))
+            func (if (pcall func bufnr val opts)
+                     (tset applied opt val)
+                     (let [msg (: "editorconfig: invalid value for option %s: %s" :format opt val)]
+                       (vim.api.nvim_echo [[msg :WarningMsg]] true {}))))))
+      (tset vim.b bufnr :editorconfig applied))))
 
 (fn trim_trailing_whitespace []
   (let [view (vim.fn.winsaveview)]
