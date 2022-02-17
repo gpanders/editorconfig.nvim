@@ -18,6 +18,27 @@ editorconfig.nvim is tested against [editorconfig-plugin-tests][].
 * `tab_width`
 * `trim_trailing_whitespace`
 
+## FAQ
+
+**Q:** Why use this instead of [editorconfig-vim][]?
+
+**A:** This plugin aims for simplicity and performance: editorconfig-vim contains
+over 1000 SLOC, while this plugin has just under 200.
+
+Additionally, while performance for an EditorConfig plugin is certainly not the
+most important thing in the world, it still matters, particularly since it is
+going to run each time you open a new buffer. This plugin is not only smaller
+than editorconfig-vim, but is written in Lua, which is demonstrably faster than
+Vimscript.
+
+**Q:** Why does it only work for Neovim?
+
+**A:** Vim does not have the same level of support for Lua, and this plugin uses
+many Neovim-specific APIs. Vim users should continue to use
+[editorconfig-vim][].
+
+[editorconfig-vim]: https://github.com/editorconfig/editorconfig-vim
+
 ## Contributing
 
 File issues in the [GitHub issue tracker][issues]. Changes can be sent as
@@ -33,3 +54,10 @@ File issues in the [GitHub issue tracker][issues]. Changes can be sent as
 [GPLv3][]
 
 [GPLv3]: https://www.gnu.org/licenses/gpl-3.0.html
+
+## See Also
+
+* [editorconfig-vim][]
+* [vim-sleuth][]
+
+[vim-sleuth]: https://github.com/tpope/vim-sleuth
