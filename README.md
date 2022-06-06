@@ -40,12 +40,6 @@ This plugin requires no setup and will "just work" when installed.
 **A:** This plugin aims for simplicity and performance: editorconfig-vim contains
 over 1000 SLOC, while this plugin has just under 200.
 
-Additionally, while performance for an EditorConfig plugin is certainly not the
-most important thing in the world, it still matters, particularly since it is
-going to run each time you open a new buffer. This plugin is not only smaller
-than editorconfig-vim, but is written in Lua, which is demonstrably faster than
-Vimscript.
-
 **Q:** Why does it only work for Neovim?
 
 **A:** Vim does not have the same level of support for Lua, and this plugin uses
