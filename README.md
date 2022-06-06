@@ -22,6 +22,17 @@ any changes to the EditorConfig specification).
 * `tab_width`
 * `trim_trailing_whitespace`
 
+## Installation
+
+Install using your favorite package manager, or install manually using Nvim's
+builtin package support:
+
+```bash
+git clone https://github.com/gpanders/editorconfig.nvim ~/.config/nvim/pack/gpanders/start/editorconfig.nvim
+```
+
+This plugin requires no setup and will "just work" when installed.
+
 ## FAQ
 
 **Q:** Why use this instead of [editorconfig-vim][]?
