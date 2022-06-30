@@ -9,6 +9,10 @@ INTRODUCTION                                                    *editorconfig*
 editorconfig.nvim is an EditorConfig plugin for Neovim that automatically
 finds and parses .editorconfig files and applies its settings to each buffer.
 
+                                                              *b:editorconfig*
+When editorconfig.nvim finds a valid .editorconfig file, it will store the
+parsed options in the buffer variable |b:editorconfig|.
+
 The following properties are supported:
 
                                                         *editorconfig_charset*
