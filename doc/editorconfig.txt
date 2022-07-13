@@ -9,11 +9,26 @@ INTRODUCTION                                                    *editorconfig*
 editorconfig.nvim is an EditorConfig plugin for Neovim that automatically
 finds and parses .editorconfig files and applies its settings to each buffer.
 
+                                                   *g:editorconfig_properties*
+A syntax file is provided to highlight invalid properties in .editorconfig
+files. By default, only the properties listed below are recognized as valid.
+Additional properties can be added by creating a |g:editorconfig_properties|
+|List| variable. This can be placed in your |config| file or in your own
+editorconfig syntax file (see |mysyntaxfile|). Example: >
+
+    let g:editorconfig_properties = ['vim_filetype']
+<
                                                               *b:editorconfig*
 When editorconfig.nvim finds a valid .editorconfig file, it will store the
 parsed options in the buffer variable |b:editorconfig|.
 
 The following properties are supported:
+
+                                                           *editorconfig_root*
+root                    If "true", then stop searching for .editorconfig files
+                        in parent directories. This property must be at the
+                        top-level of the .editorconfig file (i.e. it must not
+                        be within a glob section).
 
                                                         *editorconfig_charset*
 charset                 One of "utf-8", "utf-8-bom", "latin1", "utf-16be", or
