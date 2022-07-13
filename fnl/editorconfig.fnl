@@ -17,55 +17,63 @@
 
 (local is-win? (= (vim.fn.has :win32) 1))
 
-(local apply {})
+(local properties {})
+
+(fn assert [v message]
+  "Modified version of the builtin assert that does not include error position information"
+  (when (not v)
+    (error message 0)))
 
 (macro autocmd [event action]
   `(vim.api.nvim_command
     ,(string.format "autocmd! editorconfig %s <buffer> %s" event action)))
 
-(fn apply.charset [bufnr val]
-  (assert (vim.tbl_contains [:utf-8 :utf-8-bom :latin1 :utf-16be :utf-16le] val))
+(fn properties.charset [bufnr val]
+  (assert (vim.tbl_contains [:utf-8 :utf-8-bom :latin1 :utf-16be :utf-16le] val)
+          "charset must be one of 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', or 'utf-16le'")
   (if (or (= val :utf-8) (= val :utf-8-bom))
       (do
         (tset vim.bo bufnr :fileencoding :utf-8)
         (tset vim.bo bufnr :bomb (= val :utf-8-bom)))
       (tset vim.bo bufnr :fileencoding val)))
 
-(fn apply.end_of_line [bufnr val]
-  (tset vim.bo bufnr :fileformat (assert (. {:lf :unix :crlf :dos :cr :mac} val))))
+(fn properties.end_of_line [bufnr val]
+  (tset vim.bo bufnr :fileformat (assert (. {:lf :unix :crlf :dos :cr :mac} val)
+                                         "end_of_line must be one of 'lf', 'crlf', or 'cr'")))
 
-(fn apply.indent_style [bufnr val opts]
-  (assert (or (= val :tab) (= val :space)))
+(fn properties.indent_style [bufnr val opts]
+  (assert (or (= val :tab) (= val :space))
+          "indent_style must be either 'tab' or 'space'")
   (tset vim.bo bufnr :expandtab (= val :space))
   (when (and (= val :tab) (not opts.indent_size))
     (tset vim.bo bufnr :shiftwidth 0)
     (tset vim.bo bufnr :softtabstop 0)))
 
-(fn apply.indent_size [bufnr val opts]
+(fn properties.indent_size [bufnr val opts]
   (if (= val :tab)
       (do
         (tset vim.bo bufnr :shiftwidth 0)
         (tset vim.bo bufnr :softtabstop 0))
-      (let [n (assert (tonumber val))]
+      (let [n (assert (tonumber val) "indent_size must be a number")]
         (tset vim.bo bufnr :shiftwidth n)
         (tset vim.bo bufnr :softtabstop -1)
         (when (not opts.tab_width)
           (tset vim.bo bufnr :tabstop n)))))
 
-(fn apply.tab_width [bufnr val]
-  (tset vim.bo bufnr :tabstop (assert (tonumber val))))
+(fn properties.tab_width [bufnr val]
+  (tset vim.bo bufnr :tabstop (assert (tonumber val) "tab_width must be a number")))
 
-(fn apply.max_line_length [bufnr val]
-  (tset vim.bo bufnr :textwidth (assert (tonumber val))))
+(fn properties.max_line_length [bufnr val]
+  (tset vim.bo bufnr :textwidth (assert (tonumber val) "max_line_length must be a number")))
 
-(fn apply.trim_trailing_whitespace [bufnr val]
-  (assert (or (= val :true) (= val :false)))
+(fn properties.trim_trailing_whitespace [bufnr val]
+  (assert (or (= val :true) (= val :false)) "trim_trailing_whitespace must be either 'true' or 'false'")
   (when (= val :true)
     (autocmd :BufWritePre
              "lua require('editorconfig').trim_trailing_whitespace()")))
 
-(fn apply.insert_final_newline [bufnr val]
-  (assert (or (= val :true) (= val :false)))
+(fn properties.insert_final_newline [bufnr val]
+  (assert (or (= val :true) (= val :false)) "insert_final_newline must be either 'true' or 'false'")
   (when (not= val :true)
     (tset vim.bo bufnr :fixendofline false)
     (tset vim.bo bufnr :endofline false)))
@@ -135,11 +143,11 @@
       (var applied {})
       (each [opt val (pairs opts)]
         (when (not= val :unset)
-          (match (. apply opt)
-            func (if (pcall func bufnr val opts)
-                     (tset applied opt val)
-                     (let [msg (: "editorconfig: invalid value for option %s: %s" :format opt val)]
-                       (vim.api.nvim_echo [[msg :WarningMsg]] true {}))))))
+          (match (. properties opt)
+            func (match (pcall func bufnr val opts)
+                   true (tset applied opt val)
+                   (false err) (let [msg (: "editorconfig: invalid value for option %s: %s. %s" :format opt val err)]
+                                 (vim.api.nvim_echo [[msg :WarningMsg]] true {}))))))
       (tset vim.b bufnr :editorconfig applied))))
 
 (fn trim_trailing_whitespace []
@@ -147,4 +155,6 @@
     (vim.api.nvim_command "silent keepjumps keeppatterns %s/\\s\\+$//e")
     (vim.fn.winrestview view)))
 
-{: config : trim_trailing_whitespace}
+{: config
+ : trim_trailing_whitespace
+ : properties}

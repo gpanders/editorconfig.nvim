@@ -2,12 +2,15 @@ runtime! syntax/dosini.vim
 unlet! b:current_syntax
 
 syntax match editorconfigInvalidProperty "^\s*\zs\w\+\ze\s*="
-syntax keyword editorconfigProperty root charset end_of_line indent_size indent_style insert_final_newline max_line_length tab_width trim_trailing_whitespace
+syntax keyword editorconfigProperty root
 
-for s:prop in get(g:, 'editorconfig_properties', [])
-    exec 'syntax keyword editorconfigProperty ' .. s:prop
-endfor
-unlet! s:prop
+lua<<
+local props = {}
+for k in pairs(require('editorconfig').properties) do
+  props[#props + 1] = k
+end
+vim.cmd(string.format('syntax keyword editorconfigProperty %s', table.concat(props, ' ')))
+.
 
 hi def link editorconfigInvalidProperty Error
 hi def link editorconfigProperty dosiniLabel

@@ -4,25 +4,19 @@ Author:  Gregory Anders <contact@gpanders.com>
 Repo:    https://github.com/gpanders/editorconfig.nvim
 License: GPL-3.0-or-later
 
+==============================================================================
 INTRODUCTION                                                    *editorconfig*
 
 editorconfig.nvim is an EditorConfig plugin for Neovim that automatically
 finds and parses .editorconfig files and applies its settings to each buffer.
 
-                                                   *g:editorconfig_properties*
-A syntax file is provided to highlight invalid properties in .editorconfig
-files. By default, only the properties listed below are recognized as valid.
-Additional properties can be added by creating a |g:editorconfig_properties|
-|List| variable. This can be placed in your |config| file or in your own
-editorconfig syntax file (see |mysyntaxfile|). Example: >
-
-    let g:editorconfig_properties = ['vim_filetype']
-<
+==============================================================================
+USAGE
                                                               *b:editorconfig*
 When editorconfig.nvim finds a valid .editorconfig file, it will store the
 parsed options in the buffer variable |b:editorconfig|.
 
-The following properties are supported:
+The following properties are supported by default:
 
                                                            *editorconfig_root*
 root                    If "true", then stop searching for .editorconfig files
@@ -67,5 +61,20 @@ trim_trailing_whitespace
                         When "true", trailing whitespace is automatically
                         removed when the buffer is written.
 
+                                                   *editorconfig_add_property*
+New properties can be added by adding a new entry to the "properties" table.
+The table key is a property name and the value is a callback function which
+accepts the number of the buffer to be modified, the value of the property
+in the .editorconfig file, and (optionally) a table containing all of the
+other properties and their values (useful for properties which depend on other
+properties). The value is always a string and must be coerced if necessary.
+Example: >
 
+    require('editorconfig').properties.foo = function(bufnr, val, opts)
+      if opts.charset and opts.charset ~= "utf-8" then
+        error("foo can only be set when charset is utf-8", 0)
+      end
+      vim.b[bufnr].foo = val
+    end
+<
  vim:tw=78:ts=8:noet:ft=help:norl:

@@ -22,6 +22,16 @@ any changes to the EditorConfig specification).
 * `tab_width`
 * `trim_trailing_whitespace`
 
+## Adding custom properties
+
+Custom properties can be added through the `properties` table:
+
+```lua
+require('editorconfig').properties.foo = function(bufnr, val)
+  vim.b[bufnr].foo = val
+end
+```
+
 ## Installation
 
 Install using your favorite package manager, or install manually using Nvim's
