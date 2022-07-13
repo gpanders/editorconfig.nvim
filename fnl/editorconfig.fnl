@@ -21,8 +21,7 @@
 
 (fn assert [v message]
   "Modified version of the builtin assert that does not include error position information"
-  (when (not v)
-    (error message 0)))
+  (or v (error message 0)))
 
 (macro autocmd [event action]
   `(vim.api.nvim_command

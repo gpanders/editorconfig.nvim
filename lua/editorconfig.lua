@@ -1,11 +1,7 @@
 local is_win_3f = (vim.fn.has("win32") == 1)
 local properties = {}
 local function assert(v, message)
-  if not v then
-    return error(message, 0)
-  else
-    return nil
-  end
+  return (v or error(message, 0))
 end
 properties.charset = function(bufnr, val)
   assert(vim.tbl_contains({"utf-8", "utf-8-bom", "latin1", "utf-16be", "utf-16le"}, val), "charset must be one of 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', or 'utf-16le'")
@@ -92,16 +88,16 @@ local function dirname(path)
 end
 local function parse_line(line)
   if line:find("^%s*[^ #;]") then
-    local _9_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
-    if (nil ~= _9_) then
-      local glob = _9_
+    local _8_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
+    if (nil ~= _8_) then
+      local glob = _8_
       return glob, nil, nil
     elseif true then
-      local _ = _9_
-      local _10_, _11_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
-      if ((nil ~= _10_) and (nil ~= _11_)) then
-        local key = _10_
-        local val = _11_
+      local _ = _8_
+      local _9_, _10_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
+      if ((nil ~= _9_) and (nil ~= _10_)) then
+        local key = _9_
+        local val = _10_
         return nil, key:lower(), val:lower()
       else
         return nil
@@ -117,9 +113,9 @@ local function parse(filepath, dir)
   local pat = nil
   local opts = {}
   do
-    local _15_ = io.open((dir .. "/.editorconfig"))
-    if (nil ~= _15_) then
-      local f = _15_
+    local _14_ = io.open((dir .. "/.editorconfig"))
+    if (nil ~= _14_) then
+      local f = _14_
       local _ = f
       local function close_handlers_8_auto(ok_9_auto, ...)
         _:close()
@@ -129,11 +125,11 @@ local function parse(filepath, dir)
           return error(..., 0)
         end
       end
-      local function _17_()
+      local function _16_()
         for line in f:lines() do
-          local _18_, _19_, _20_ = parse_line(line)
-          if (nil ~= _18_) then
-            local glob = _18_
+          local _17_, _18_, _19_ = parse_line(line)
+          if (nil ~= _17_) then
+            local glob = _17_
             local glob0
             if glob:find("/") then
               glob0 = (dir .. "/" .. glob:gsub("^/", ""))
@@ -141,9 +137,9 @@ local function parse(filepath, dir)
               glob0 = ("**/" .. glob)
             end
             pat = vim.regex(glob2regpat(glob0))
-          elseif ((_18_ == nil) and (nil ~= _19_) and (nil ~= _20_)) then
-            local key = _19_
-            local val = _20_
+          elseif ((_17_ == nil) and (nil ~= _18_) and (nil ~= _19_)) then
+            local key = _18_
+            local val = _19_
             if (key == "root") then
               opts["root"] = (val == "true")
             elseif (pat and pat:match_str(filepath)) then
@@ -155,7 +151,7 @@ local function parse(filepath, dir)
         end
         return nil
       end
-      close_handlers_8_auto(_G.xpcall(_17_, (package.loaded.fennel or debug).traceback))
+      close_handlers_8_auto(_G.xpcall(_16_, (package.loaded.fennel or debug).traceback))
     else
     end
   end
@@ -189,14 +185,14 @@ local function config(bufnr)
     local applied = {}
     for opt, val in pairs(opts) do
       if (val ~= "unset") then
-        local _28_ = properties[opt]
-        if (nil ~= _28_) then
-          local func = _28_
-          local _29_, _30_ = pcall(func, bufnr0, val, opts)
-          if (_29_ == true) then
+        local _27_ = properties[opt]
+        if (nil ~= _27_) then
+          local func = _27_
+          local _28_, _29_ = pcall(func, bufnr0, val, opts)
+          if (_28_ == true) then
             applied[opt] = val
-          elseif ((_29_ == false) and (nil ~= _30_)) then
-            local err = _30_
+          elseif ((_28_ == false) and (nil ~= _29_)) then
+            local err = _29_
             local msg = ("editorconfig: invalid value for option %s: %s. %s"):format(opt, val, err)
             vim.api.nvim_echo({{msg, "WarningMsg"}}, true, {})
           else
