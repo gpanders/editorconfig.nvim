@@ -146,7 +146,8 @@
             func (match (pcall func bufnr val opts)
                    true (tset applied opt val)
                    (false err) (let [msg (: "editorconfig: invalid value for option %s: %s. %s" :format opt val err)]
-                                 (vim.api.nvim_echo [[msg :WarningMsg]] true {}))))))
+                                 ; 'title' is supported by nvim-notify
+                                 (vim.notify msg vim.log.levels.WARN {:title "editorconfig"}))))))
       (tset vim.b bufnr :editorconfig applied))))
 
 (fn trim_trailing_whitespace []
