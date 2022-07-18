@@ -194,7 +194,7 @@ local function config(bufnr)
           elseif ((_28_ == false) and (nil ~= _29_)) then
             local err = _29_
             local msg = ("editorconfig: invalid value for option %s: %s. %s"):format(opt, val, err)
-            vim.api.nvim_echo({{msg, "WarningMsg"}}, true, {})
+            vim.notify(msg, vim.log.levels.WARN, {title = "editorconfig"})
           else
           end
         else
