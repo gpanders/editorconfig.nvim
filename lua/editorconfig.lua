@@ -88,7 +88,7 @@ local function dirname(path)
 end
 local function parse_line(line)
   if line:find("^%s*[^ #;]") then
-    local _8_ = ((line:match("%b[]") or "")):match("%[([^%]]+)")
+    local _8_ = ((line:match("%b[]") or "")):match("^%s*%[(.*)%]%s*$")
     if (nil ~= _8_) then
       local glob = _8_
       return glob, nil, nil

@@ -100,7 +100,7 @@
 
 (fn parse-line [line]
   (when (line:find "^%s*[^ #;]")
-    (match (: (or (line:match "%b[]") "") :match "%[([^%]]+)")
+    (match (: (or (line:match "%b[]") "") :match "^%s*%[(.*)%]%s*$")
       glob (values glob nil nil)
       _ (match (line:match "^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
           (key val) (values nil (key:lower) (val:lower))))))
