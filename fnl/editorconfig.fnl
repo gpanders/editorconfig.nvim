@@ -148,7 +148,8 @@
                    (false err) (let [msg (: "editorconfig: invalid value for option %s: %s. %s" :format opt val err)]
                                  ; 'title' is supported by nvim-notify
                                  (vim.notify msg vim.log.levels.WARN {:title "editorconfig"}))))))
-      (tset vim.b bufnr :editorconfig applied))))
+      (tset vim.b bufnr :editorconfig applied)
+      (vim.api.nvim_exec_autocmds :User {:pattern :EditorConfigPost}))))
 
 (fn trim_trailing_whitespace []
   (let [view (vim.fn.winsaveview)]

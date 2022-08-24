@@ -203,7 +203,7 @@ local function config(bufnr)
       end
     end
     vim.b[bufnr0]["editorconfig"] = applied
-    return nil
+    return vim.api.nvim_exec_autocmds("User", {pattern = "EditorConfigPost"})
   else
     return nil
   end
