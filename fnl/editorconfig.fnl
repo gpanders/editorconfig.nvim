@@ -63,7 +63,11 @@
   (tset vim.bo bufnr :tabstop (assert (tonumber val) "tab_width must be a number")))
 
 (fn properties.max_line_length [bufnr val]
-  (tset vim.bo bufnr :textwidth (assert (tonumber val) "max_line_length must be a number")))
+  (match (tonumber val)
+    n (tset vim.bo bufnr :textwidth n)
+    nil (if (= val :off)
+            (tset vim.bo bufnr :textwidth 0)
+            (error "max_line_length must be a number or 'off'" 0))))
 
 (fn properties.trim_trailing_whitespace [bufnr val]
   (assert (or (= val :true) (= val :false)) "trim_trailing_whitespace must be either 'true' or 'false'")

@@ -51,8 +51,21 @@ properties.tab_width = function(bufnr, val)
   return nil
 end
 properties.max_line_length = function(bufnr, val)
-  vim.bo[bufnr]["textwidth"] = assert(tonumber(val), "max_line_length must be a number")
-  return nil
+  local _5_ = tonumber(val)
+  if (nil ~= _5_) then
+    local n = _5_
+    vim.bo[bufnr]["textwidth"] = n
+    return nil
+  elseif (_5_ == nil) then
+    if (val == "off") then
+      vim.bo[bufnr]["textwidth"] = 0
+      return nil
+    else
+      return error("max_line_length must be a number or 'off'", 0)
+    end
+  else
+    return nil
+  end
 end
 properties.trim_trailing_whitespace = function(bufnr, val)
   assert(((val == "true") or (val == "false")), "trim_trailing_whitespace must be either 'true' or 'false'")
@@ -88,16 +101,16 @@ local function dirname(path)
 end
 local function parse_line(line)
   if line:find("^%s*[^ #;]") then
-    local _8_ = ((line:match("%b[]") or "")):match("^%s*%[(.*)%]%s*$")
-    if (nil ~= _8_) then
-      local glob = _8_
+    local _11_ = ((line:match("%b[]") or "")):match("^%s*%[(.*)%]%s*$")
+    if (nil ~= _11_) then
+      local glob = _11_
       return glob, nil, nil
     elseif true then
-      local _ = _8_
-      local _9_, _10_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
-      if ((nil ~= _9_) and (nil ~= _10_)) then
-        local key = _9_
-        local val = _10_
+      local _ = _11_
+      local _12_, _13_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
+      if ((nil ~= _12_) and (nil ~= _13_)) then
+        local key = _12_
+        local val = _13_
         return nil, key:lower(), val:lower()
       else
         return nil
@@ -113,9 +126,9 @@ local function parse(filepath, dir)
   local pat = nil
   local opts = {}
   do
-    local _14_ = io.open((dir .. "/.editorconfig"))
-    if (nil ~= _14_) then
-      local f = _14_
+    local _17_ = io.open((dir .. "/.editorconfig"))
+    if (nil ~= _17_) then
+      local f = _17_
       local _ = f
       local function close_handlers_8_auto(ok_9_auto, ...)
         _:close()
@@ -125,11 +138,11 @@ local function parse(filepath, dir)
           return error(..., 0)
         end
       end
-      local function _16_()
+      local function _19_()
         for line in f:lines() do
-          local _17_, _18_, _19_ = parse_line(line)
-          if (nil ~= _17_) then
-            local glob = _17_
+          local _20_, _21_, _22_ = parse_line(line)
+          if (nil ~= _20_) then
+            local glob = _20_
             local glob0
             if glob:find("/") then
               glob0 = (dir .. "/" .. glob:gsub("^/", ""))
@@ -137,9 +150,9 @@ local function parse(filepath, dir)
               glob0 = ("**/" .. glob)
             end
             pat = vim.regex(glob2regpat(glob0))
-          elseif ((_17_ == nil) and (nil ~= _18_) and (nil ~= _19_)) then
-            local key = _18_
-            local val = _19_
+          elseif ((_20_ == nil) and (nil ~= _21_) and (nil ~= _22_)) then
+            local key = _21_
+            local val = _22_
             if (key == "root") then
               opts["root"] = (val == "true")
             elseif (pat and pat:match_str(filepath)) then
@@ -151,7 +164,7 @@ local function parse(filepath, dir)
         end
         return nil
       end
-      close_handlers_8_auto(_G.xpcall(_16_, (package.loaded.fennel or debug).traceback))
+      close_handlers_8_auto(_G.xpcall(_19_, (package.loaded.fennel or debug).traceback))
     else
     end
   end
@@ -185,14 +198,14 @@ local function config(bufnr)
     local applied = {}
     for opt, val in pairs(opts) do
       if (val ~= "unset") then
-        local _27_ = properties[opt]
-        if (nil ~= _27_) then
-          local func = _27_
-          local _28_, _29_ = pcall(func, bufnr0, val, opts)
-          if (_28_ == true) then
+        local _30_ = properties[opt]
+        if (nil ~= _30_) then
+          local func = _30_
+          local _31_, _32_ = pcall(func, bufnr0, val, opts)
+          if (_31_ == true) then
             applied[opt] = val
-          elseif ((_28_ == false) and (nil ~= _29_)) then
-            local err = _29_
+          elseif ((_31_ == false) and (nil ~= _32_)) then
+            local err = _32_
             local msg = ("editorconfig: invalid value for option %s: %s. %s"):format(opt, val, err)
             vim.notify(msg, vim.log.levels.WARN, {title = "editorconfig"})
           else
