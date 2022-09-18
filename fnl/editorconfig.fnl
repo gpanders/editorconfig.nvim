@@ -27,6 +27,10 @@
   `(vim.api.nvim_command
     ,(string.format "autocmd! editorconfig %s <buffer> %s" event action)))
 
+(fn warn [msg]
+  ; 'title' is supported by nvim-notify
+  (vim.notify msg vim.log.levels.WARN {:title :editorconfig}))
+
 (fn properties.charset [bufnr val]
   (assert (vim.tbl_contains [:utf-8 :utf-8-bom :latin1 :utf-16be :utf-16le] val)
           "charset must be one of 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', or 'utf-16le'")
@@ -119,7 +123,11 @@
             glob (let [glob (if (glob:find "/")
                                 (.. dir "/" (glob:gsub "^/" ""))
                                 (.. "**/" glob))]
-                   (-> glob glob2regpat vim.regex (->> (set pat))))
+                   (match (pcall glob2regpat glob)
+                     (true regpat) (set pat (vim.regex regpat))
+                     (false err) (do
+                                   (set pat nil)
+                                   (warn (: "editorconfig: Error occurred while parsing glob pattern '%s': %s" :format glob err)))))
             (nil key val) (if (= key :root)
                               (tset opts :root (= val :true))
                               (and pat (pat:match_str filepath))
@@ -149,9 +157,7 @@
           (match (. properties opt)
             func (match (pcall func bufnr val opts)
                    true (tset applied opt val)
-                   (false err) (let [msg (: "editorconfig: invalid value for option %s: %s. %s" :format opt val err)]
-                                 ; 'title' is supported by nvim-notify
-                                 (vim.notify msg vim.log.levels.WARN {:title "editorconfig"}))))))
+                   (false err) (warn (: "editorconfig: invalid value for option %s: %s. %s" :format opt val err))))))
       (tset vim.b bufnr :editorconfig applied))))
 
 (fn trim_trailing_whitespace []

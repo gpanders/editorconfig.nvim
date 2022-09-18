@@ -3,6 +3,9 @@ local properties = {}
 local function assert(v, message)
   return (v or error(message, 0))
 end
+local function warn(msg)
+  return vim.notify(msg, vim.log.levels.WARN, {title = "editorconfig"})
+end
 properties.charset = function(bufnr, val)
   assert(vim.tbl_contains({"utf-8", "utf-8-bom", "latin1", "utf-16be", "utf-16le"}, val), "charset must be one of 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', or 'utf-16le'")
   if ((val == "utf-8") or (val == "utf-8-bom")) then
@@ -149,7 +152,16 @@ local function parse(filepath, dir)
             else
               glob0 = ("**/" .. glob)
             end
-            pat = vim.regex(glob2regpat(glob0))
+            local _24_, _25_ = pcall(glob2regpat, glob0)
+            if ((_24_ == true) and (nil ~= _25_)) then
+              local regpat = _25_
+              pat = vim.regex(regpat)
+            elseif ((_24_ == false) and (nil ~= _25_)) then
+              local err = _25_
+              pat = nil
+              warn(("editorconfig: Error occurred while parsing glob pattern '%s': %s"):format(glob0, err))
+            else
+            end
           elseif ((_20_ == nil) and (nil ~= _21_) and (nil ~= _22_)) then
             local key = _21_
             local val = _22_
@@ -198,16 +210,15 @@ local function config(bufnr)
     local applied = {}
     for opt, val in pairs(opts) do
       if (val ~= "unset") then
-        local _30_ = properties[opt]
-        if (nil ~= _30_) then
-          local func = _30_
-          local _31_, _32_ = pcall(func, bufnr0, val, opts)
-          if (_31_ == true) then
+        local _33_ = properties[opt]
+        if (nil ~= _33_) then
+          local func = _33_
+          local _34_, _35_ = pcall(func, bufnr0, val, opts)
+          if (_34_ == true) then
             applied[opt] = val
-          elseif ((_31_ == false) and (nil ~= _32_)) then
-            local err = _32_
-            local msg = ("editorconfig: invalid value for option %s: %s. %s"):format(opt, val, err)
-            vim.notify(msg, vim.log.levels.WARN, {title = "editorconfig"})
+          elseif ((_34_ == false) and (nil ~= _35_)) then
+            local err = _35_
+            warn(("editorconfig: invalid value for option %s: %s. %s"):format(opt, val, err))
           else
           end
         else
