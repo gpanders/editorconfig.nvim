@@ -6,6 +6,11 @@ end
 local function warn(msg)
   return vim.notify(msg, vim.log.levels.WARN, {title = "editorconfig"})
 end
+local function trim_trailing_whitespace()
+  local view = vim.fn.winsaveview()
+  vim.api.nvim_command("silent keepjumps keeppatterns %s/\\s\\+$//e")
+  return vim.fn.winrestview(view)
+end
 properties.charset = function(bufnr, val)
   assert(vim.tbl_contains({"utf-8", "utf-8-bom", "latin1", "utf-16be", "utf-16le"}, val), "charset must be one of 'utf-8', 'utf-8-bom', 'latin1', 'utf-16be', or 'utf-16le'")
   if ((val == "utf-8") or (val == "utf-8-bom")) then
@@ -73,7 +78,7 @@ end
 properties.trim_trailing_whitespace = function(bufnr, val)
   assert(((val == "true") or (val == "false")), "trim_trailing_whitespace must be either 'true' or 'false'")
   if (val == "true") then
-    return vim.api.nvim_command("autocmd! editorconfig BufWritePre <buffer> lua require('editorconfig').trim_trailing_whitespace()")
+    return vim.api.nvim_create_autocmd("BufWritePre", {group = "editorconfig", buffer = bufnr, callback = trim_trailing_whitespace})
   else
     return nil
   end
@@ -133,9 +138,9 @@ local function parse(filepath, dir)
     if (nil ~= _17_) then
       local f = _17_
       local _ = f
-      local function close_handlers_8_auto(ok_9_auto, ...)
+      local function close_handlers_10_auto(ok_11_auto, ...)
         _:close()
-        if ok_9_auto then
+        if ok_11_auto then
           return ...
         else
           return error(..., 0)
@@ -176,7 +181,7 @@ local function parse(filepath, dir)
         end
         return nil
       end
-      close_handlers_8_auto(_G.xpcall(_19_, (package.loaded.fennel or debug).traceback))
+      close_handlers_10_auto(_G.xpcall(_19_, (package.loaded.fennel or debug).traceback))
     else
     end
   end
@@ -232,9 +237,8 @@ local function config(bufnr)
     return nil
   end
 end
-local function trim_trailing_whitespace()
-  local view = vim.fn.winsaveview()
-  vim.api.nvim_command("silent keepjumps keeppatterns %s/\\s\\+$//e")
-  return vim.fn.winrestview(view)
+local function trim_trailing_whitespace0()
+  vim.notify_once(debug.traceback("editorconfig.nvim: trim_trailing_whitespace() is deprecated and will soon be removed", 2), vim.log.levels.WARN)
+  return trim_trailing_whitespace()
 end
-return {config = config, trim_trailing_whitespace = trim_trailing_whitespace, properties = properties}
+return {config = config, trim_trailing_whitespace = trim_trailing_whitespace0, properties = properties}

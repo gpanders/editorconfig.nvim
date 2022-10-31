@@ -23,13 +23,15 @@
   "Modified version of the builtin assert that does not include error position information"
   (or v (error message 0)))
 
-(macro autocmd [event action]
-  `(vim.api.nvim_command
-    ,(string.format "autocmd! editorconfig %s <buffer> %s" event action)))
-
 (fn warn [msg]
   ; 'title' is supported by nvim-notify
   (vim.notify msg vim.log.levels.WARN {:title :editorconfig}))
+
+; TODO: Inline this function when trim_trailing_whitespace is removed
+(fn trim-trailing-whitespace []
+  (let [view (vim.fn.winsaveview)]
+    (vim.api.nvim_command "silent keepjumps keeppatterns %s/\\s\\+$//e")
+    (vim.fn.winrestview view)))
 
 (fn properties.charset [bufnr val]
   (assert (vim.tbl_contains [:utf-8 :utf-8-bom :latin1 :utf-16be :utf-16le] val)
@@ -76,8 +78,9 @@
 (fn properties.trim_trailing_whitespace [bufnr val]
   (assert (or (= val :true) (= val :false)) "trim_trailing_whitespace must be either 'true' or 'false'")
   (when (= val :true)
-    (autocmd :BufWritePre
-             "lua require('editorconfig').trim_trailing_whitespace()")))
+    (vim.api.nvim_create_autocmd :BufWritePre {:group :editorconfig
+                                               :buffer bufnr
+                                               :callback trim-trailing-whitespace})))
 
 (fn properties.insert_final_newline [bufnr val]
   (assert (or (= val :true) (= val :false)) "insert_final_newline must be either 'true' or 'false'")
@@ -161,9 +164,9 @@
       (tset vim.b bufnr :editorconfig applied))))
 
 (fn trim_trailing_whitespace []
-  (let [view (vim.fn.winsaveview)]
-    (vim.api.nvim_command "silent keepjumps keeppatterns %s/\\s\\+$//e")
-    (vim.fn.winrestview view)))
+  (vim.notify_once (debug.traceback "editorconfig.nvim: trim_trailing_whitespace() is deprecated and will soon be removed" 2)
+                   vim.log.levels.WARN)
+  (trim-trailing-whitespace))
 
 {: config
  : trim_trailing_whitespace
