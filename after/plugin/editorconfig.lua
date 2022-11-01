@@ -20,21 +20,10 @@ if vim.g.loaded_editorconfig then
 end
 vim.g.loaded_editorconfig = 1
 
--- Ensure the editorconfig autocommand is created as late as possible to ensure
--- that it runs *after* every other BufRead autocommand (within reason, there
--- is nothing we can do about autocommands created in a lazy loaded plugin) by
--- defining it just before the very first redraw. This is a hack. Sue me.
-local ns = vim.api.nvim_create_namespace("")
-vim.api.nvim_set_decoration_provider(ns, {
-    on_start = function()
-        local id = vim.api.nvim_create_augroup("editorconfig", {})
-        vim.api.nvim_create_autocmd({"BufNewFile", "BufRead", "BufFilePost"}, {
-            group = id,
-            callback = function(args)
-                require("editorconfig").config(args.buf)
-            end,
-        })
-        vim.api.nvim_set_decoration_provider(ns, {})
-        return false
+local group = vim.api.nvim_create_augroup("editorconfig", {})
+vim.api.nvim_create_autocmd({"BufNewFile", "BufRead", "BufFilePost"}, {
+    group = group,
+    callback = function(args)
+        require("editorconfig").config(args.buf)
     end,
 })
