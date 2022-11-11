@@ -30,6 +30,7 @@
 ; TODO: Inline this function when trim_trailing_whitespace is removed
 (fn trim-trailing-whitespace []
   (let [view (vim.fn.winsaveview)]
+    (vim.api.nvim_command "silent! undojoin")
     (vim.api.nvim_command "silent keepjumps keeppatterns %s/\\s\\+$//e")
     (vim.fn.winrestview view)))
 
