@@ -79,9 +79,12 @@
 (fn properties.trim_trailing_whitespace [bufnr val]
   (assert (or (= val :true) (= val :false)) "trim_trailing_whitespace must be either 'true' or 'false'")
   (when (= val :true)
-    (vim.api.nvim_create_autocmd :BufWritePre {:group :editorconfig
-                                               :buffer bufnr
-                                               :callback trim-trailing-whitespace})))
+    (if (= (vim.fn.has :nvim-0.7) 1)
+        (vim.api.nvim_create_autocmd :BufWritePre {:group :editorconfig
+                                                   :buffer bufnr
+                                                   :callback trim-trailing-whitespace})
+        (vim.cmd (: "autocmd editorconfig BufWritePre <buffer=%d> lua require('editorconfig').trim_trailing_whitespace()"
+                    :format bufnr)))))
 
 (fn properties.insert_final_newline [bufnr val]
   (assert (or (= val :true) (= val :false)) "insert_final_newline must be either 'true' or 'false'")
@@ -165,8 +168,9 @@
       (tset vim.b bufnr :editorconfig applied))))
 
 (fn trim_trailing_whitespace []
-  (vim.notify_once (debug.traceback "editorconfig.nvim: trim_trailing_whitespace() is deprecated and will soon be removed" 2)
-                   vim.log.levels.WARN)
+  (when (= (vim.fn.has :nvim-0.7) 1)
+    (vim.notify_once (debug.traceback "editorconfig.nvim: trim_trailing_whitespace() is deprecated and will soon be removed" 2)
+                     vim.log.levels.WARN))
   (trim-trailing-whitespace))
 
 {: config

@@ -79,7 +79,11 @@ end
 properties.trim_trailing_whitespace = function(bufnr, val)
   assert(((val == "true") or (val == "false")), "trim_trailing_whitespace must be either 'true' or 'false'")
   if (val == "true") then
-    return vim.api.nvim_create_autocmd("BufWritePre", {group = "editorconfig", buffer = bufnr, callback = trim_trailing_whitespace})
+    if (vim.fn.has("nvim-0.7") == 1) then
+      return vim.api.nvim_create_autocmd("BufWritePre", {group = "editorconfig", buffer = bufnr, callback = trim_trailing_whitespace})
+    else
+      return vim.cmd(("autocmd editorconfig BufWritePre <buffer=%d> lua require('editorconfig').trim_trailing_whitespace()"):format(bufnr))
+    end
   else
     return nil
   end
@@ -110,16 +114,16 @@ local function dirname(path)
 end
 local function parse_line(line)
   if line:find("^%s*[^ #;]") then
-    local _11_ = ((line:match("%b[]") or "")):match("^%s*%[(.*)%]%s*$")
-    if (nil ~= _11_) then
-      local glob = _11_
+    local _12_ = ((line:match("%b[]") or "")):match("^%s*%[(.*)%]%s*$")
+    if (nil ~= _12_) then
+      local glob = _12_
       return glob, nil, nil
     elseif true then
-      local _ = _11_
-      local _12_, _13_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
-      if ((nil ~= _12_) and (nil ~= _13_)) then
-        local key = _12_
-        local val = _13_
+      local _ = _12_
+      local _13_, _14_ = line:match("^%s*([^:= ][^:=]-)%s*[:=]%s*(.-)%s*$")
+      if ((nil ~= _13_) and (nil ~= _14_)) then
+        local key = _13_
+        local val = _14_
         return nil, key:lower(), val:lower()
       else
         return nil
@@ -135,9 +139,9 @@ local function parse(filepath, dir)
   local pat = nil
   local opts = {}
   do
-    local _17_ = io.open((dir .. "/.editorconfig"))
-    if (nil ~= _17_) then
-      local f = _17_
+    local _18_ = io.open((dir .. "/.editorconfig"))
+    if (nil ~= _18_) then
+      local f = _18_
       local _ = f
       local function close_handlers_10_auto(ok_11_auto, ...)
         _:close()
@@ -147,30 +151,30 @@ local function parse(filepath, dir)
           return error(..., 0)
         end
       end
-      local function _19_()
+      local function _20_()
         for line in f:lines() do
-          local _20_, _21_, _22_ = parse_line(line)
-          if (nil ~= _20_) then
-            local glob = _20_
+          local _21_, _22_, _23_ = parse_line(line)
+          if (nil ~= _21_) then
+            local glob = _21_
             local glob0
             if glob:find("/") then
               glob0 = (dir .. "/" .. glob:gsub("^/", ""))
             else
               glob0 = ("**/" .. glob)
             end
-            local _24_, _25_ = pcall(glob2regpat, glob0)
-            if ((_24_ == true) and (nil ~= _25_)) then
-              local regpat = _25_
+            local _25_, _26_ = pcall(glob2regpat, glob0)
+            if ((_25_ == true) and (nil ~= _26_)) then
+              local regpat = _26_
               pat = vim.regex(regpat)
-            elseif ((_24_ == false) and (nil ~= _25_)) then
-              local err = _25_
+            elseif ((_25_ == false) and (nil ~= _26_)) then
+              local err = _26_
               pat = nil
               warn(("editorconfig: Error occurred while parsing glob pattern '%s': %s"):format(glob0, err))
             else
             end
-          elseif ((_20_ == nil) and (nil ~= _21_) and (nil ~= _22_)) then
-            local key = _21_
-            local val = _22_
+          elseif ((_21_ == nil) and (nil ~= _22_) and (nil ~= _23_)) then
+            local key = _22_
+            local val = _23_
             if (key == "root") then
               opts["root"] = (val == "true")
             elseif (pat and pat:match_str(filepath)) then
@@ -182,7 +186,7 @@ local function parse(filepath, dir)
         end
         return nil
       end
-      close_handlers_10_auto(_G.xpcall(_19_, (package.loaded.fennel or debug).traceback))
+      close_handlers_10_auto(_G.xpcall(_20_, (package.loaded.fennel or debug).traceback))
     else
     end
   end
@@ -216,14 +220,14 @@ local function config(bufnr)
     local applied = {}
     for opt, val in pairs(opts) do
       if (val ~= "unset") then
-        local _33_ = properties[opt]
-        if (nil ~= _33_) then
-          local func = _33_
-          local _34_, _35_ = pcall(func, bufnr0, val, opts)
-          if (_34_ == true) then
+        local _34_ = properties[opt]
+        if (nil ~= _34_) then
+          local func = _34_
+          local _35_, _36_ = pcall(func, bufnr0, val, opts)
+          if (_35_ == true) then
             applied[opt] = val
-          elseif ((_34_ == false) and (nil ~= _35_)) then
-            local err = _35_
+          elseif ((_35_ == false) and (nil ~= _36_)) then
+            local err = _36_
             warn(("editorconfig: invalid value for option %s: %s. %s"):format(opt, val, err))
           else
           end
@@ -239,7 +243,10 @@ local function config(bufnr)
   end
 end
 local function trim_trailing_whitespace0()
-  vim.notify_once(debug.traceback("editorconfig.nvim: trim_trailing_whitespace() is deprecated and will soon be removed", 2), vim.log.levels.WARN)
+  if (vim.fn.has("nvim-0.7") == 1) then
+    vim.notify_once(debug.traceback("editorconfig.nvim: trim_trailing_whitespace() is deprecated and will soon be removed", 2), vim.log.levels.WARN)
+  else
+  end
   return trim_trailing_whitespace()
 end
 return {config = config, trim_trailing_whitespace = trim_trailing_whitespace0, properties = properties}
