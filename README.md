@@ -4,12 +4,14 @@ EditorConfig plugin for Neovim written in ~~Lua~~ [Fennel][fennel].
 
 editorconfig.nvim is tested against [editorconfig-plugin-tests][].
 
-This plugin is considered complete: bugs will continue to be fixed if and when
-they're found, but no new features will be added (except to stay up-to-date with
-any changes to the EditorConfig specification).
-
 [fennel]: https://fennel-lang.org
 [editorconfig-plugin-tests]: https://github.com/editorconfig/editorconfig-plugin-tests
+
+## Project Status
+
+Neovim 0.9 has EditorConfig integration builtin, so this plugin is no longer
+necessary. Bug fixes will continue to be addressed when reported to support
+older versions of Neovim, but no further features will be added.
 
 ## Supported properties
 
