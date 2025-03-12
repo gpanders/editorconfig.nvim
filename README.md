@@ -9,9 +9,9 @@ editorconfig.nvim is tested against [editorconfig-plugin-tests][].
 
 ## Project Status
 
-Neovim 0.9 has EditorConfig integration builtin, so this plugin is no longer
-necessary. Bug fixes will continue to be addressed when reported to support
-older versions of Neovim, but no further features will be added.
+Native EditorConfig support was added to Neovim in version 0.9.
+
+This plugin is now archived.
 
 ## Supported properties
 
@@ -59,16 +59,6 @@ many Neovim-specific APIs. Vim users should continue to use
 [editorconfig-vim][].
 
 [editorconfig-vim]: https://github.com/editorconfig/editorconfig-vim
-
-## Contributing
-
-File issues in the [GitHub issue tracker][issues]. Changes can be sent as
-[`git-send-email`][git-send-email] patches to
-[~gpanders/public-inbox@lists.sr.ht][public-inbox] or as a GitHub pull request.
-
-[issues]: https://github.com/gpanders/editorconfig.nvim/issues
-[git-send-email]: https://git-send-email.io
-[public-inbox]: mailto:~gpanders/public-inbox@lists.sr.ht
 
 ## License
 
